@@ -29,6 +29,7 @@ public class ReservationServiceApplication {
     public static void main(String[] args) {
         SpringApplication.run(ReservationServiceApplication.class, args);
     }
+/*
 
 
     @Bean
@@ -37,6 +38,7 @@ public class ReservationServiceApplication {
         return RouterFunctions.route(RequestPredicates.GET("/message"),
                 req -> ServerResponse.ok().body(Mono.just(msg), String.class));
     }
+*/
 
     @Bean
     ApplicationRunner init(ReservationRepository rr) {
@@ -49,7 +51,7 @@ public class ReservationServiceApplication {
                         .subscribe(x -> log.info(x.toString()));
     }
 }
-
+/*
 @RestController
 class ReservationRestController {
 
@@ -64,7 +66,7 @@ class ReservationRestController {
         return this.reservationRepository.findAll();
     }
 }
-
+*/
 interface ReservationRepository extends ReactiveMongoRepository<Reservation, String> {
 }
 
