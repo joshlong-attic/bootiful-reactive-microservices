@@ -35,7 +35,7 @@ public class ReservationServiceApplication {
     @RefreshScope
     RouterFunction<?> routes(@Value("${message}") String msg, ReservationRepository rr) {
         return RouterFunctions.route(GET("/message"), req -> ServerResponse.ok().body(Mono.just(msg), String.class))
-            .andRoute(GET("/reservations"), req -> ServerResponse.ok().body(rr.findAll(), Reservation.class));
+                .andRoute(GET("/reservations"), req -> ServerResponse.ok().body(rr.findAll(), Reservation.class));
     }
 
     @Bean
@@ -49,6 +49,7 @@ public class ReservationServiceApplication {
                         .subscribe(x -> log.info(x.toString()));
     }
 }
+
 
 interface ReservationRepository extends ReactiveMongoRepository<Reservation, String> {
 }
