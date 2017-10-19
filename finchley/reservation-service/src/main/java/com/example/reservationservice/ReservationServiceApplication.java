@@ -17,7 +17,13 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.function.server.RouterFunction;
+import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
+import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
 @Slf4j
 @EnableDiscoveryClient
@@ -28,14 +34,13 @@ public class ReservationServiceApplication {
         SpringApplication.run(ReservationServiceApplication.class, args);
     }
 
-/*
+
     @Bean
     @RefreshScope
     RouterFunction<?> routes(@Value("${message}") String msg, ReservationRepository rr) {
         return route(GET("/message"), req -> ServerResponse.ok().body(Mono.just(msg), String.class))
                 .andRoute(GET("/reservations"), req -> ServerResponse.ok().body(rr.findAll(), Reservation.class));
     }
-*/
 
 
     @Bean
@@ -54,7 +59,7 @@ public class ReservationServiceApplication {
 interface ReservationRepository extends ReactiveMongoRepository<Reservation, String> {
 }
 
-
+/*
 @RestController
 @RefreshScope
 class MessageRestController {
@@ -84,7 +89,7 @@ class ReservationRestController {
         return this.reservationRepository.findAll();
     }
 }
-
+*/
 @Document
 @Data
 @AllArgsConstructor
