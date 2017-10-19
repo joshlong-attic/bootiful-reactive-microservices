@@ -1,7 +1,5 @@
 package com.example.reservationclient;
 
-import com.netflix.hystrix.HystrixCommandGroupKey;
-import com.netflix.hystrix.HystrixObservableCommand;
 import lombok.Data;
 import org.reactivestreams.Publisher;
 import org.springframework.boot.SpringApplication;
@@ -11,15 +9,9 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.client.loadbalancer.reactive.LoadBalancerExchangeFilterFunction;
 import org.springframework.cloud.gateway.discovery.DiscoveryClientRouteDefinitionLocator;
 import org.springframework.context.annotation.Bean;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.server.RouterFunction;
-import reactor.core.publisher.Flux;
-import rx.Observable;
-import rx.RxReactiveStreams;
-
-import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
-import static org.springframework.web.reactive.function.server.RouterFunctions.route;
-import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
 @SpringBootApplication
 @EnableDiscoveryClient
@@ -39,37 +31,55 @@ public class ReservationClientApplication {
         return WebClient.builder().filter(lb).build();
     }
 
-    private static Publisher<String> circuitBreak(Publisher<String> results) {
+  /*  @Bean
+    RouterFunction<?> routes(WebClient client) {
+        return route(GET("/reservations/names"),
+                r -> {
 
-        HystrixObservableCommand<String> command = new HystrixObservableCommand<String>(
-                HystrixCommandGroupKey.Factory.asKey("fetch-names")) {
+                    Publisher<String> res = client
+                            .get()
+                            .uri("http://reservation-service/reservations")
+                            .retrieve()
+                            .bodyToFlux(Reservation.class)
+                            .map(Reservation::getReservationName);
 
-            @Override
-            protected Observable<String> construct() {
-                return RxReactiveStreams.toObservable(results);
-            }
+                    HystrixObservableCommand<String> cmd = new HystrixObservableCommand<String>(
+                            HystrixCommandGroupKey.Factory.asKey("reservation-names")) {
 
-            @Override
-            protected Observable<String> resumeWithFallback() {
-                return RxReactiveStreams.toObservable(Flux.just("EEK"));
-            }
-        };
+                        @Override
+                        protected Observable<String> resumeWithFallback() {
+                            return RxReactiveStreams.toObservable(Flux.just("EEK!"));
+                        }
 
-        return RxReactiveStreams.toPublisher(command.observe());
+                        @Override
+                        protected Observable<String> construct() {
+                            return RxReactiveStreams.toObservable(res);
+                        }
+                    };
+
+                    Publisher<String> response = RxReactiveStreams.toPublisher(cmd.toObservable());
+                    return ok().body(res , String.class);
+                });
+    }*/
+}
+
+@RestController
+class ReservationApiAdapterRestController {
+
+    private final WebClient webClient;
+
+    ReservationApiAdapterRestController(WebClient webClient) {
+        this.webClient = webClient;
     }
 
-    private static Flux<String> fetch(WebClient client) {
-        return client
+    @GetMapping("/reservations/names")
+    Publisher<String> names() {
+        return this.webClient
                 .get()
                 .uri("http://reservation-service/reservations")
                 .retrieve()
                 .bodyToFlux(Reservation.class)
                 .map(Reservation::getReservationName);
-    }
-
-    @Bean
-    RouterFunction<?> routes(WebClient client) {
-        return route(GET("/reservations/names"), r -> ok().body(circuitBreak(fetch(client)), String.class));
     }
 }
 
