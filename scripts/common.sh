@@ -15,7 +15,7 @@ PRESENCE_CHECK_URL="${PRESENCE_CHECK_URL:-http://localhost:8761/eureka/apps}"
 TEST_PATH="${TEST_PATH:-reservations/names}"
 HEALTH_HOST="${DEFAULT_HEALTH_HOST:-localhost}" #provide DEFAULT_HEALT HOST as host of your docker machine
 RABBIT_MQ_PORT="${RABBIT_MQ_PORT:-9672}"
-SYSTEM_PROPS="-Dspring.rabbitmq.host=${HEALTH_HOST} -Dspring.rabbitmq.port=${RABBIT_MQ_PORT}"
+SYSTEM_PROPS="-Dspring.rabbitmq.host=${HEALTH_HOST} -Dspring.rabbitmq.port=${RABBIT_MQ_PORT} -Dendpoints.default.web.enabled=true"
 
 # ${RETRIES} number of times will try to curl to /health endpoint to passed port $1 and localhost
 function wait_for_app_to_boot_on_port() {

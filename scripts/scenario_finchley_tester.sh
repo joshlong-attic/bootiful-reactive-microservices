@@ -43,6 +43,9 @@ We will do it in the following way:
 
 EOF
 
+echo "Starting RabbitMQ on port 9672 with docker-compose"
+docker-compose up -d || echo "RabbitMQ seems to be working already or some other exception occurred"
+
 cd $ROOT_FOLDER/$PROFILE
 
 java_jar config-service
@@ -61,9 +64,12 @@ check_app_presence_in_discovery RESERVATION-SERVICE
 
 java_jar zipkin-server
 wait_for_app_to_boot_on_port 9411
-check_app_presence_in_discovery ZIPKIN-SERVICE
+#check_app_presence_in_discovery ZIPKIN-SERVICE
 
 send_test_request 9999 "reservations/names"
 echo -e "\n\nThe $BOM_VERSION Reservation client successfully responded to the call"
+
+check_trace
+check_span_names
 
 cd $ROOT_FOLDER
