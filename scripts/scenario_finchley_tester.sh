@@ -28,7 +28,7 @@ We will do it in the following way:
 01) Run config-server
 02) Wait for the app (config-server) to boot (port: 8888)
 03) Run eureka-service
-04) Wait for the app (eureka-service) to boot (port: 8761)3)
+04) Wait for the app (eureka-service) to boot (port: 8761)
 05) Run reservation-client
 06) Wait for the app (reservation-client) to boot (port: 9999)
 07) Wait for the app (reservation-client) to register in Eureka Server
