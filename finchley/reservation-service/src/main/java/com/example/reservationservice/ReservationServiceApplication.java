@@ -4,20 +4,21 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.reactivestreams.Publisher;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.cloud.stream.annotation.EnableBinding;
+import org.springframework.cloud.stream.annotation.Input;
+import org.springframework.cloud.stream.annotation.StreamListener;
+import org.springframework.cloud.stream.messaging.Sink;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
@@ -28,11 +29,27 @@ import static org.springframework.web.reactive.function.server.RouterFunctions.r
 
 @Slf4j
 @EnableDiscoveryClient
+@EnableBinding(Sink.class)
 @SpringBootApplication
 public class ReservationServiceApplication {
 
+    private final ReservationRepository reservationRepository;
+
+    public ReservationServiceApplication(ReservationRepository reservationRepository) {
+        this.reservationRepository = reservationRepository;
+    }
+
     public static void main(String[] args) {
         SpringApplication.run(ReservationServiceApplication.class, args);
+    }
+
+
+    @StreamListener
+    public void process(@Input(Sink.INPUT) Flux<String> names) {
+        names
+                .map(String::toUpperCase)
+                .flatMap(x -> reservationRepository.save(new Reservation(null, x)))
+                .subscribe();
     }
 
     @Bean
@@ -46,49 +63,17 @@ public class ReservationServiceApplication {
     ApplicationRunner init(ReservationRepository rr) {
         return args ->
                 rr.deleteAll()
-                    .thenMany(Flux.just("A", "B", "C", "D")
-                            .map(x -> new Reservation(null, x))
-                            .flatMap(rr::save))
-                    .thenMany(rr.findAll())
-                    .subscribe(x -> log.info(x.toString()));
+                        .thenMany(Flux.just("A", "B", "C", "D")
+                                .map(x -> new Reservation(null, x))
+                                .flatMap(rr::save))
+                        .thenMany(rr.findAll())
+                        .subscribe(x -> log.info(x.toString()));
     }
 }
-
 
 interface ReservationRepository extends ReactiveMongoRepository<Reservation, String> {
 }
 
-/*
-@RestController
-@RefreshScope
-class MessageRestController {
-
-    private final String value;
-
-    MessageRestController(@Value("${message}") String value) {
-        this.value = value;
-    }
-
-    @GetMapping("/message")
-    Publisher<String> msg() {
-        return Flux.just(this.value);
-    }
-}
-
-@RestController
-class ReservationRestController {
-    private final ReservationRepository reservationRepository;
-
-    ReservationRestController(ReservationRepository reservationRepository) {
-        this.reservationRepository = reservationRepository;
-    }
-
-    @GetMapping("/reservations")
-    Publisher<Reservation> reservations() {
-        return this.reservationRepository.findAll();
-    }
-}
-*/
 @Document
 @Data
 @AllArgsConstructor

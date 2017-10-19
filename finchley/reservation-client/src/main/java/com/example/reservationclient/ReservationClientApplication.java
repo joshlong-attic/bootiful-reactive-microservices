@@ -10,7 +10,10 @@ import org.springframework.cloud.gateway.discovery.DiscoveryClientRouteDefinitio
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.Routes;
 import org.springframework.cloud.netflix.hystrix.HystrixCommands;
+import org.springframework.cloud.stream.annotation.EnableBinding;
+import org.springframework.cloud.stream.messaging.Source;
 import org.springframework.context.annotation.Bean;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -18,9 +21,11 @@ import reactor.core.publisher.Flux;
 
 import static org.springframework.cloud.gateway.handler.predicate.RoutePredicates.path;
 import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
+import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
 @SpringBootApplication
+@EnableBinding(Source.class)
 @EnableDiscoveryClient
 public class ReservationClientApplication {
 
@@ -48,9 +53,8 @@ public class ReservationClientApplication {
         return WebClient.builder().filter(lb).build();
     }
 
-
     @Bean
-    RouterFunction<?> routes(WebClient client) {
+    RouterFunction<?> routes(WebClient client, Source src) {
         return route(GET("/reservations/names"),
                 r -> {
                     Flux<String> res = client
@@ -66,7 +70,14 @@ public class ReservationClientApplication {
                             .eager()
                             .toFlux();
                     return ServerResponse.ok().body(publisher, String.class);
-                });
+                })
+                .andRoute(POST("/reservations"), request ->
+                        request
+                                .bodyToFlux(Reservation.class)
+                                .map(bodyRes -> MessageBuilder.withPayload(bodyRes.getReservationName()).build())
+                                .map(src.output()::send)
+                                .then(ServerResponse.ok().build())
+                );
     }
 }
 
