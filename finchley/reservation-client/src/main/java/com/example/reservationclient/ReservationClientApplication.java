@@ -1,26 +1,20 @@
 package com.example.reservationclient;
 
-import com.netflix.hystrix.HystrixCommandGroupKey;
-import com.netflix.hystrix.HystrixObservableCommand;
 import lombok.Data;
-import org.reactivestreams.Publisher;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.client.loadbalancer.reactive.LoadBalancerExchangeFilterFunction;
 import org.springframework.cloud.gateway.discovery.DiscoveryClientRouteDefinitionLocator;
-import org.springframework.cloud.gateway.filter.factory.RequestRateLimiterGatewayFilterFactory;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.Routes;
+import org.springframework.cloud.netflix.hystrix.HystrixCommands;
 import org.springframework.context.annotation.Bean;
-import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
-import rx.Observable;
-import rx.RxReactiveStreams;
 
 import static org.springframework.cloud.gateway.handler.predicate.RoutePredicates.path;
 import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
@@ -40,7 +34,7 @@ public class ReservationClientApplication {
     }
 
     @Bean
-    RouteLocator gateway(RequestRateLimiterGatewayFilterFactory rateLimiter) {
+    RouteLocator gateway() {
         return Routes
                 .locator()
                 .route("rate_limited_route")
@@ -65,24 +59,13 @@ public class ReservationClientApplication {
                             .retrieve()
                             .bodyToFlux(Reservation.class)
                             .map(Reservation::getReservationName);
-
-//                    Publisher<String> cb = HystrixCommands.wrap("reservation-name", res, Flux.just("EEK"));
-                    HystrixObservableCommand<String> cmd = new HystrixObservableCommand<String>(
-                            HystrixCommandGroupKey.Factory.asKey("reservation-names")) {
-
-                        @Override
-                        protected Observable<String> resumeWithFallback() {
-                            return RxReactiveStreams.toObservable(Flux.just("EEK!"));
-                        }
-
-                        @Override
-                        protected Observable<String> construct() {
-                            return RxReactiveStreams.toObservable(res);
-                        }
-                    };
-                    Observable<String> observable = cmd.observe();
-                    Publisher<String> publisher = RxReactiveStreams.toPublisher(observable);
-                    return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(publisher, String.class);
+                    Flux<String> publisher = HystrixCommands
+                            .from(res)
+                            .commandName("reservation-names")
+                            .fallback(Flux.just("EEK!"))
+                            .eager()
+                            .toFlux();
+                    return ServerResponse.ok().body(publisher, String.class);
                 });
     }
 }
