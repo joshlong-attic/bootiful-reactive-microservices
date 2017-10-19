@@ -14,7 +14,7 @@ import org.springframework.cloud.gateway.filter.factory.RequestRateLimiterGatewa
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.Routes;
 import org.springframework.context.annotation.Bean;
-import org.springframework.tuple.TupleBuilder;
+import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -22,8 +22,6 @@ import reactor.core.publisher.Flux;
 import rx.Observable;
 import rx.RxReactiveStreams;
 
-import static org.springframework.cloud.gateway.filter.factory.RequestRateLimiterGatewayFilterFactory.BURST_CAPACITY_KEY;
-import static org.springframework.cloud.gateway.filter.factory.RequestRateLimiterGatewayFilterFactory.REPLENISH_RATE_KEY;
 import static org.springframework.cloud.gateway.handler.predicate.RoutePredicates.path;
 import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
@@ -42,18 +40,14 @@ public class ReservationClientApplication {
     }
 
     @Bean
-    RouteLocator customRouteLocator(RequestRateLimiterGatewayFilterFactory rateLimiter) {
-        //@formatter:off
+    RouteLocator gateway(RequestRateLimiterGatewayFilterFactory rateLimiter) {
         return Routes
                 .locator()
-                .route("rate_limit_and_circuit_breaker")
-                    .predicate(path("/edge-reservations"))
-                    .filter(rateLimiter.apply(TupleBuilder.tuple().of(REPLENISH_RATE_KEY, "1", BURST_CAPACITY_KEY, "2")))
-                    .uri("lb://reservation-service/reservations")
+                .route("rate_limited_route")
+                .predicate(path("/edge-reservations"))
+                .uri("lb://reservation-service/reservations")
                 .build();
-        //@formatter:on
     }
-
 
     @Bean
     WebClient client(LoadBalancerExchangeFilterFunction lb) {
@@ -65,14 +59,14 @@ public class ReservationClientApplication {
     RouterFunction<?> routes(WebClient client) {
         return route(GET("/reservations/names"),
                 r -> {
-
-
                     Flux<String> res = client
                             .get()
                             .uri("http://reservation-service/reservations")
                             .retrieve()
                             .bodyToFlux(Reservation.class)
                             .map(Reservation::getReservationName);
+
+//                    Publisher<String> cb = HystrixCommands.wrap("reservation-name", res, Flux.just("EEK"));
                     HystrixObservableCommand<String> cmd = new HystrixObservableCommand<String>(
                             HystrixCommandGroupKey.Factory.asKey("reservation-names")) {
 
@@ -88,7 +82,7 @@ public class ReservationClientApplication {
                     };
                     Observable<String> observable = cmd.observe();
                     Publisher<String> publisher = RxReactiveStreams.toPublisher(observable);
-                    return ServerResponse.ok().body(publisher, String.class);
+                    return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(publisher, String.class);
                 });
     }
 }
