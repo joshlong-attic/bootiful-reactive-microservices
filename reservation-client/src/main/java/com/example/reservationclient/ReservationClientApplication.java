@@ -1,5 +1,7 @@
 package com.example.reservationclient;
 
+import com.netflix.hystrix.HystrixCommandGroupKey;
+import com.netflix.hystrix.HystrixObservableCommand;
 import lombok.Data;
 import org.reactivestreams.Publisher;
 import org.springframework.boot.SpringApplication;
@@ -12,6 +14,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.server.RouterFunction;
+import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Flux;
+import rx.Observable;
+import rx.RxReactiveStreams;
+
+import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
+import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
 @SpringBootApplication
 @EnableDiscoveryClient
@@ -31,7 +41,7 @@ public class ReservationClientApplication {
         return WebClient.builder().filter(lb).build();
     }
 
-  /*  @Bean
+    @Bean
     RouterFunction<?> routes(WebClient client) {
         return route(GET("/reservations/names"),
                 r -> {
@@ -58,28 +68,8 @@ public class ReservationClientApplication {
                     };
 
                     Publisher<String> response = RxReactiveStreams.toPublisher(cmd.toObservable());
-                    return ok().body(res , String.class);
+                    return ServerResponse.ok().body(response, String.class);
                 });
-    }*/
-}
-
-@RestController
-class ReservationApiAdapterRestController {
-
-    private final WebClient webClient;
-
-    ReservationApiAdapterRestController(WebClient webClient) {
-        this.webClient = webClient;
-    }
-
-    @GetMapping("/reservations/names")
-    Publisher<String> names() {
-        return this.webClient
-                .get()
-                .uri("http://reservation-service/reservations")
-                .retrieve()
-                .bodyToFlux(Reservation.class)
-                .map(Reservation::getReservationName);
     }
 }
 
