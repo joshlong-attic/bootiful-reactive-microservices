@@ -27,6 +27,7 @@ public class ReservationServiceApplication {
     public static void main(String[] args) {
         SpringApplication.run(ReservationServiceApplication.class, args);
     }
+
 /*
     @Bean
     @RefreshScope
@@ -79,7 +80,7 @@ class ReservationRestController {
     }
 
     @GetMapping("/reservations")
-    Publisher<Reservation> reservationPublisher() {
+    Publisher<Reservation> reservations() {
         return this.reservationRepository.findAll();
     }
 }
