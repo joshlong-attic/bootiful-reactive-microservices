@@ -33,11 +33,13 @@ class ReservationServiceApplication {
                         .flatMap { rr.save(it) })
                 .thenMany(rr.findAll())
                 .subscribe({ println(it) })
+
+
     }
 
     @Bean
     @RefreshScope
-    fun routes(rr: ReservationRepository, @Value("\${message}") msg: String) = router {
+    fun routes(rr: ReservationRepository, @Value("\${message:um.. hi?}") msg: String) = router {
 
         GET("/reservations") { ServerResponse.ok().body(rr.findAll()) }
 

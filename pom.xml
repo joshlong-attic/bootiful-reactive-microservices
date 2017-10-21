@@ -27,7 +27,7 @@
             </activation>
             <modules>
                 <module>finchley</module>
-            </modules>
+             </modules>
         </profile>
         <profile>
             <id>finchley</id>
