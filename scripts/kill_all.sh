@@ -10,5 +10,5 @@ kill_app config-service
 kill_app eureka-service
 kill_app reservation-client
 kill_app reservation-service
-kill_app zipkin-server
+kill_app zipkin-service
 docker-compose kill && echo "Killed rabbit" && exit 0 || echo "Failed to kill Rabbit" && exit 0
