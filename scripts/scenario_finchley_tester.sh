@@ -62,7 +62,7 @@ java_jar reservation-service
 wait_for_app_to_boot_on_port 8000
 check_app_presence_in_discovery RESERVATION-SERVICE
 
-java_jar zipkin-server
+java_jar zipkin-service
 wait_for_app_to_boot_on_port 9411
 #check_app_presence_in_discovery ZIPKIN-SERVICE
 
