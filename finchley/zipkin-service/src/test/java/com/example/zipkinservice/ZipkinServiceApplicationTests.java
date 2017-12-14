@@ -1,4 +1,4 @@
-package com.example.zipkinserver;
+package com.example.zipkinservice;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -7,7 +7,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class ZipkinServerApplicationTests {
+public class ZipkinServiceApplicationTests {
 
 	@Test
 	public void contextLoads() {
