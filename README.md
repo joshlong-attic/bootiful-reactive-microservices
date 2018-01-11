@@ -1,63 +1,35 @@
-# Bootiful Microservices HOL
+In my old 6h workshop (before Spring Framework 5 introduced reactive support, Spring Boot 2.0 and Spring Cloud Finchley) i would cover:
 
-## Prerequisites
+  - REST (servlet)
+  - data access (JPA + H2)
+  - observability w/ actuator 
+  - service registration & discovery
+  - client side load balancing w/ Eureka
+  - reliability patterns w/ circuit breakers 
+  - eventual consistency / messaging w/ Spring Cloud Stream and RabbitMQ 
+  - REST clients w/ RestTemplate abd Feign 
+  - distributed tracing w/ Sleuth Stream + ZIpkin Stream Server 
+  - Circuit Breaker dashboard  (w/ no turbine)
+  - SSO w/ Spring Cloud Security
+  - microservice testing w/ Spring Cloud Contract 
+  - Java 
+  - edge services /microproxies/api gateways w Zuul
 
-### Develop
-- [Git](http://git-scm.com/downloads)
-- [Java 8](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)
-- [Spring Boot CLI](http://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#getting-started-installing-the-cli)
+Now, in 2018, everything is bigger and better!
 
-### Deploy and Manage
-- Create a free account on [Pivotal Web Services](http://run.pivotal.io/)
-- install the [Cloud Foundry CLI](https://github.com/cloudfoundry/cli/releases)
+in my new 6h workshop (after reactive and Finchley) i will cover:
 
-### Running the Examples
-
-To follow the simple Spring Boot CLI example:
-
-- in a new file called `hi.groovy` type:
-
-```
-@RestController
-class GreetingsRestController {
-
-  @RequestMapping("/hi/{name}")
-  def hi(@PathVariable String name){
-    [ greeting : "Hello, "+name+"!" ]
-  }
-}
-```
-- from the terminal in the same directory as the newly created `hi.groovy`, run `spring jar hi.jar hi.groovy`
-- you'll be given a `.jar` that you can execute: `java -jar hi.jar`
-
-### Pushing to Cloud Foundry
-
-- `cf login` to ensure that you've authenticated against your Pivotal Web Services account. My session looked like this, yours will feature your own Cloud Foundry credentials.
-```
-> cf login
-
-API endpoint> api.run.pivotal.io
-
-Email> MY_EMAIL@HOST.com
-
-Password>
-Authenticating...
-OK
-
-Select an org (or press enter to skip):
-1. platform-eng
-2. codecafe
-
-Org> 1
-Targeted org platform-eng
-
-Targeted space joshlong
-
-
-API endpoint:   https://api.run.pivotal.io (API version: 2.44.0)
-User:           MY_EMAIL@HOST.com
-Org:            platform-eng
-Space:          joshlong
-
-```
-- `cf push -p hi.jar SOME_NAME_YOU_MAKEUP_HERE` - the `SOME_NAME_YOU_MAKEUP_HERE` is arbitrary; it'll inform the URL that's used to mount the application and as such it shares a shared global (DNS) namespace
+ - REST (reactive w/ WebFlux)
+ - data access (reactive w/ MongoDB)
+ - observability w/ actuator (still works, but its micrometer)
+ - service registration & discovery w/ Consul
+ - client side load balancing w/ Consul
+ - reliability patterns w/ circuit breakers (works but now im using `HystrixCommands` and adapting a `Publisher<T>`)
+ - eventual consistency / messaging w/ Spring Cloud Stream and Kakfa
+ - REST clients w/ WebClient (Feign doesnt work; any alternatives? Does the stuff from Square work yet?)
+ - distributed tracing w/ Zipkin client and Kafka
+ - Circuit Breaker dashboard  (w/ Turbine - havent tried this yet)
+ - SSO w/ Spring Cloud Security (whts this look like w/ Spring Security 5 and OIDC support)
+ - microservice testing w/ Spring Cloud Contract (i havent tries this yet in a reactive world)
+ - Kotlin
+ - edge services /microproxies/api gateways w Spring Cloud Gateay
