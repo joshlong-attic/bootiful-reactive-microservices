@@ -22,12 +22,12 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.bodyToFlux
 import org.springframework.web.reactive.function.server.ServerResponse
 import org.springframework.web.reactive.function.server.body
-import org.springframework.web.reactive.function.server.bodyToMono
 import org.springframework.web.reactive.function.server.router
 import reactor.core.publisher.Flux
 
-@SpringBootApplication
+
 @EnableBinding(Source::class)
+@SpringBootApplication
 class ReservationClientApplication
 
 fun main(args: Array<String>) {
@@ -35,69 +35,75 @@ fun main(args: Array<String>) {
 			.sources(ReservationClientApplication::class.java)
 			.initializers(beans {
 				bean {
-					val lb = ref<LoadBalancerExchangeFilterFunction>()
-					WebClient.builder().filter(lb).build()
+					val filter = ref<LoadBalancerExchangeFilterFunction>()
+					WebClient.builder().filter(filter).build()
 				}
 				bean {
+					val channel = ref<Source>().output()
+					val client = ref<WebClient>()
 					router {
-						val writesChannel = ref<Source>()
-						val client = ref<WebClient>()
+
+						POST("/reservations") { request ->
+							val sent: Publisher<Boolean> = request
+									.bodyToFlux(Reservation::class.java)
+									.map { it.reservationName }
+									.map {
+										MessageBuilder.withPayload(it).build()
+									}
+									.map {
+										channel.send(it)
+									}
+							ServerResponse.ok().body(sent)
+						}
 
 						GET("/reservations/names") {
-							val names: Publisher<String> = client
-									.get()
+
+							val response: Publisher<String> = client.get()
 									.uri("http://reservation-service/reservations")
 									.retrieve()
 									.bodyToFlux<Reservation>()
 									.map { it.reservationName }
 
-							val cb = HystrixCommands
-									.from(names)
-									.commandName("reservation-names")
-									.fallback(Flux.just("EEEK!!"))
+							val cb = HystrixCommands.from(response)
+									.commandName("resevations-commands")
+									.fallback(Flux.just("OH NOES!!!"))
 									.eager()
 									.build()
 
 							ServerResponse.ok().body(cb)
 						}
-						POST("/reservations") { req ->
-							req.bodyToMono<Reservation>()
-									.map { it.reservationName }
-									.map { MessageBuilder.withPayload(it!!).build() }
-									.map { writesChannel.output().send(it) }
-									.flatMap { ServerResponse.ok().build() }
-						}
 					}
 				}
+
 				bean {
+
 					MapReactiveUserDetailsService(
 							User.withDefaultPasswordEncoder()
 									.username("user")
+									.password("password")
 									.roles("USER")
-									.password("pw")
-									.build())
+									.build()
+					)
 				}
 				bean {
 					val http = ref<ServerHttpSecurity>()
-					http
-							.csrf().disable()
+					http.csrf().disable()
 							.httpBasic()
 							.and()
 							.authorizeExchange()
-							.pathMatchers("/proxy").authenticated()
+							.pathMatchers("/rl").authenticated()
 							.anyExchange().permitAll()
 							.and()
 							.build()
 				}
 				bean {
-					val lrb = ref<RouteLocatorBuilder>()
-					lrb.routes {
+					val rlb = ref<RouteLocatorBuilder>()
+					rlb.routes {
 						route {
-							val rl = ref<RequestRateLimiterGatewayFilterFactory>()
-									.apply(RedisRateLimiter.args(2, 4))
-							path("/proxy")
+							path("/rl")
 							filters {
-								filter(rl)
+								filter(ref<RequestRateLimiterGatewayFilterFactory>()
+										.apply(RedisRateLimiter.args(3, 6)))
 							}
 							uri("lb://reservation-service/reservations")
 						}

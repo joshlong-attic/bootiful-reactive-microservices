@@ -8,8 +8,12 @@ import org.springframework.cloud.stream.annotation.Input
 import org.springframework.cloud.stream.annotation.StreamListener
 import org.springframework.cloud.stream.messaging.Sink
 import org.springframework.context.support.beans
+import org.springframework.core.env.Environment
+import org.springframework.core.env.get
+import org.springframework.data.annotation.Id
+import org.springframework.data.mongodb.core.mapping.Document
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository
-import org.springframework.web.reactive.function.server.ServerResponse.ok
+import org.springframework.web.reactive.function.server.ServerResponse
 import org.springframework.web.reactive.function.server.body
 import org.springframework.web.reactive.function.server.router
 import reactor.core.publisher.Flux
@@ -19,52 +23,51 @@ import reactor.core.publisher.Flux
 class ReservationServiceApplication
 
 
-class Processor(val rr: ReservationRepository) {
+class Processor(val repo: ReservationRepository) {
 
 	@StreamListener
-	fun go(@Input(Sink.INPUT) incoming: Flux<String>) {
-		incoming
-				.map { it.toUpperCase() }
-				.flatMap { rr.save(Reservation(reservationName = it)) }
-				.subscribe()
+	fun incoming(@Input(Sink.INPUT) incomingNames: Flux<String>) {
+		incomingNames
+				.map { Reservation(reservationName = it) }
+				.flatMap { repo.save(it) }
+				.subscribe { println("new reservation ${it.reservationName}.") }
 	}
 }
 
-
 fun main(args: Array<String>) {
+
 	SpringApplicationBuilder()
+			.sources(ReservationServiceApplication::class.java)
 			.initializers(beans {
 				bean {
 					Processor(ref())
+				}
+				bean {
+					val repo = ref<ReservationRepository>()
+					val env = ref<Environment>()
+					router {
+						GET("/reservations") { ServerResponse.ok().body(repo.findAll()) }
+						GET("/message") { ServerResponse.ok().body(Flux.just(env["message"])) }
+					}
 				}
 				bean {
 					ApplicationRunner {
 						val repo = ref<ReservationRepository>()
 						repo
 								.deleteAll()
-								.thenMany(Flux.just("A", "B", "C", "D")
+								.thenMany(Flux.just("Josh", "Karsten", "Mark",
+										"Stephan", "Matthias", "Johannes")
 										.map { Reservation(reservationName = it) }
 										.flatMap { repo.save(it) })
 								.thenMany(repo.findAll())
 								.subscribe { println(it) }
-
 					}
 				}
-				bean {
-					router {
-						val repo = ref<ReservationRepository>()
-
-						GET("/reservations") { ok().body(repo.findAll()) }
-					}
-				}
-
-
 			})
-			.sources(ReservationServiceApplication::class.java)
 			.run(*args)
-
 }
 
 interface ReservationRepository : ReactiveMongoRepository<Reservation, String>
 
-data class Reservation(val id: String? = null, val reservationName: String? = null)
+@Document
+data class Reservation(@Id val id: String? = null, val reservationName: String? = null)
