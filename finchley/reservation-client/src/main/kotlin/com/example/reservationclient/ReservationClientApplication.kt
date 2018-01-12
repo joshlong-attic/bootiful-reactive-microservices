@@ -74,9 +74,7 @@ fun main(args: Array<String>) {
 						}
 					}
 				}
-
 				bean {
-
 					MapReactiveUserDetailsService(
 							User.withDefaultPasswordEncoder()
 									.username("user")
