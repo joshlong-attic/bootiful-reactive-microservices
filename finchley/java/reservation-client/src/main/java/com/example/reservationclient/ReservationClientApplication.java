@@ -93,8 +93,8 @@ public class ReservationClientApplication {
 	}
 
 	@Bean
-	RouteLocator routeLocator(RouteLocatorBuilder rlb,
-	                          RequestRateLimiterGatewayFilterFactory rlf) {
+	RouteLocator routeLocator(
+			RouteLocatorBuilder rlb, RequestRateLimiterGatewayFilterFactory rlf) {
 		GatewayFilter gatewayFilter = rlf.apply(RedisRateLimiter.args(2, 4));
 		return rlb
 				.routes()
