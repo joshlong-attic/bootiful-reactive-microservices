@@ -51,16 +51,18 @@ public class ReservationClientApplication {
 	@Bean
 	SecurityWebFilterChain authorization(ServerHttpSecurity httpSecurity) {
 		return httpSecurity
-				.csrf().disable()
 				.authorizeExchange().pathMatchers("/rl").authenticated()
 				.anyExchange().permitAll()
 				.and()
+				.httpBasic()
+				.and()
+				.csrf().disable()
 				.build();
 	}
 
 	@Bean
 	RouterFunction<?> routerFunction(WebClient client, Source src) {
-		//@formatter:on
+		//@formatter:off
 		return
 				route(GET("/reservations/names"), request -> {
 					Flux<String> names = client
@@ -87,7 +89,7 @@ public class ReservationClientApplication {
 							.map(msg -> src.output().send(msg));
 					return ServerResponse.ok().body(ok, Boolean.class);
 				});
-		//@formatter:off
+		//@formatter:on
 	}
 
 	@Bean
@@ -99,6 +101,7 @@ public class ReservationClientApplication {
 				.route(spec ->
 						spec.path("/rl")
 								.filter(gatewayFilter)
+								.setPath("/reservations")
 								.uri("lb://reservation-service"))
 				.route(spec ->
 						spec
