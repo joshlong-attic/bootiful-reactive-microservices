@@ -97,7 +97,8 @@ public class ReservationClientApplication {
 		return rlb
 				.routes()
 				.route(spec ->
-						spec.path("/rl")
+						spec
+								.path("/rl")
 								.requestRateLimiter(RedisRateLimiter.args(2, 4))
 								.setPath("/reservations")
 								.uri("lb://reservation-service"))
