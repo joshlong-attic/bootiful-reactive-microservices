@@ -7,7 +7,6 @@ import org.reactivestreams.Publisher;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.loadbalancer.reactive.LoadBalancerExchangeFilterFunction;
-import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.RequestRateLimiterGatewayFilterFactory;
 import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter;
 import org.springframework.cloud.gateway.route.RouteLocator;
@@ -95,12 +94,11 @@ public class ReservationClientApplication {
 	@Bean
 	RouteLocator routeLocator(
 			RouteLocatorBuilder rlb, RequestRateLimiterGatewayFilterFactory rlf) {
-		GatewayFilter gatewayFilter = rlf.apply(RedisRateLimiter.args(2, 4));
 		return rlb
 				.routes()
 				.route(spec ->
 						spec.path("/rl")
-								.filter(gatewayFilter)
+								.requestRateLimiter(RedisRateLimiter.args(2, 4))
 								.setPath("/reservations")
 								.uri("lb://reservation-service"))
 				.route(spec ->
