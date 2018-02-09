@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import org.reactivestreams.Publisher;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.circuitbreaker.EnableCircuitBreaker;
 import org.springframework.cloud.client.loadbalancer.reactive.LoadBalancerExchangeFilterFunction;
 import org.springframework.cloud.gateway.filter.factory.RequestRateLimiterGatewayFilterFactory;
 import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter;
@@ -29,6 +30,7 @@ import static org.springframework.web.reactive.function.server.RequestPredicates
 import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
+@EnableCircuitBreaker
 @EnableBinding(Source.class)
 @SpringBootApplication
 public class ReservationClientApplication {
