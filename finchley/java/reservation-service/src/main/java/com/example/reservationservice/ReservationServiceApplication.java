@@ -6,11 +6,13 @@ import lombok.NoArgsConstructor;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.circuitbreaker.EnableCircuitBreaker;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.cloud.stream.annotation.Input;
 import org.springframework.cloud.stream.annotation.StreamListener;
 import org.springframework.cloud.stream.messaging.Sink;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
@@ -21,6 +23,7 @@ import reactor.core.publisher.Flux;
 import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 import static org.springframework.web.reactive.function.server.ServerResponse.ok;
+
 
 @SpringBootApplication
 @EnableBinding(Sink.class)
@@ -54,8 +57,12 @@ public class ReservationServiceApplication {
 	}
 
 	@Bean
-	RouterFunction<ServerResponse> routes(ReservationRepository rr) {
-		return route(GET("/reservations"), req -> ok().body(rr.findAll(), Reservation.class));
+	RouterFunction<ServerResponse> routes(
+			ReservationRepository rr,
+			Environment environment) {
+		return
+				route(GET("/reservations"), req -> ok().body(rr.findAll(), Reservation.class))
+				.andRoute(GET("/message"), req -> ok().body(Flux.just(environment.getProperty("message")), String.class));
 	}
 
 	public static void main(String[] args) {
