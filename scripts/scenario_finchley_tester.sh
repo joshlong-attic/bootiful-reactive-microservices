@@ -37,39 +37,49 @@ We will do it in the following way:
 10) Wait for the app (reservation-service) to register in Eureka Server
 11) Run zipkin-service
 12) Wait for the app (zipkin-server) to boot (port: 9411)
-13) Wait for the app (zipkin-server) to register in Eureka Server
-14) Send a test request to populate some entries in Zipkin
-15) Check if Zipkin has stored the trace for the aforementioned request
+13) Send a test request to populate some entries in Zipkin
+14) Check if Zipkin has stored the trace for the aforementioned request
 
 EOF
 
 echo "Starting RabbitMQ on port 9672 with docker-compose"
 docker-compose up -d || echo "RabbitMQ seems to be working already or some other exception occurred"
 
-cd $ROOT_FOLDER/$PROFILE
+cd ${ROOT_FOLDER}/${PROFILE}
 
-java_jar config-service
-wait_for_app_to_boot_on_port 8888
+# Runs tests for a given language (java / kotlin)
+function run_tests() {
+    echo "Running tests for ${1}"
+    pushd "${ROOT_FOLDER}/${PROFILE}/${1}"
+    java_jar config-service
+    wait_for_app_to_boot_on_port 8888
 
-java_jar eureka-service
-wait_for_app_to_boot_on_port 8761
+    java_jar eureka-service
+    wait_for_app_to_boot_on_port 8761
 
-java_jar reservation-client
-wait_for_app_to_boot_on_port 9999
-check_app_presence_in_discovery RESERVATION-CLIENT
+    java_jar reservation-client
+    wait_for_app_to_boot_on_port 9999
+    check_app_presence_in_discovery RESERVATION-CLIENT
 
-java_jar reservation-service
-wait_for_app_to_boot_on_port 8000
-check_app_presence_in_discovery RESERVATION-SERVICE
+    java_jar reservation-service
+    wait_for_app_to_boot_on_port 8000
+    check_app_presence_in_discovery RESERVATION-SERVICE
 
-java_jar zipkin-service
-wait_for_app_to_boot_on_port 9411
-#check_app_presence_in_discovery ZIPKIN-SERVICE
+    download_zipkin
+    java_jar zipkin-service
+    wait_for_app_to_boot_on_port 9411
 
-send_test_request 9999 "reservations/names"
-echo -e "\n\nThe $BOM_VERSION Reservation client successfully responded to the call"
+    send_test_request 9999 "reservations"
+    echo -e "\n\nThe ${BOM_VERSION} Reservation client successfully responded to the call"
 
-check_trace
-check_span_names
+    check_trace
+    check_span_names
+    kill_all
+    popd
+}
 
-cd $ROOT_FOLDER
+
+cd ${ROOT_FOLDER}
+
+run_tests "java"
+run_tests "kotlin"

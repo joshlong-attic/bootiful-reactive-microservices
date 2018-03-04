@@ -28,7 +28,7 @@ function curl_health_endpoint() {
     local READY_FOR_TESTS=1
     for i in $( seq 1 "${RETRIES}" ); do
         sleep "${WAIT_TIME}"
-        curl -sS -m 5 "${PASSED_HOST}:$1/health" && READY_FOR_TESTS=0 && break
+        curl -sSf -m 5 "${PASSED_HOST}:$1/actuator/health" && READY_FOR_TESTS=0 && break
         echo "Fail #$i/${RETRIES}... will try again in [${WAIT_TIME}] seconds"
     done
     if [[ "${READY_FOR_TESTS}" == "1" ]] ; then
@@ -152,6 +152,16 @@ function check_span_names_for_service() {
     return 1
 }
 
+# Downloads the latest version of Zipkin to build/zipkin.jar
+function download_zipkin() {
+    mkdir zipkin-service || echo "zipkin-service already created"
+    pushd zipkin-service
+    mkdir target
+    cd target
+    curl -sSL https://zipkin.io/quickstart.sh | bash -s
+    popd
+}
+
 # Calls a GET to zipkin to check span names for services
 function check_span_names() {
     local RESERVATION_CLIENT_URL_TO_CALL="http://localhost:9411/api/v1/spans?serviceName=reservation-client"
@@ -193,6 +203,17 @@ function print_logs() {
     cat ${app_name}/${BUILD_FOLDER}/nohup.log || echo "Failed to print the logs"
 }
 
+function kill_all() {
+    echo -e "I'm in folder `pwd`"
+    echo -e "Killing all apps\n"
+    kill_app config-service
+    kill_app eureka-service
+    kill_app reservation-client
+    kill_app reservation-service
+    kill_app zipkin-service
+    docker-compose kill && echo "Killed rabbit" && exit 0 || echo "Failed to kill Rabbit" && exit 0
+}
+
 export WAIT_TIME
 export RETIRES
 export SERVICE_PORT
@@ -205,6 +226,7 @@ export -f kill_app
 export -f kill_all_apps
 export -f check_app_presence_in_discovery
 export -f send_test_request
+export -f download_zipkin
 export -f check_span_names
 export -f check_span_names_for_service
 

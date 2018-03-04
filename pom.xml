@@ -11,7 +11,7 @@
     -->
     <groupId>com.example</groupId>
     <artifactId>bootiful-reactive-microservices</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0.BUILD-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <properties>
@@ -33,6 +33,18 @@
             <id>finchley</id>
             <modules>
                 <module>finchley</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>finchley_java</id>
+            <modules>
+                <module>finchley/java</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>finchley_kotlin</id>
+            <modules>
+                <module>finchley/kotlin</module>
             </modules>
         </profile>
     </profiles>
