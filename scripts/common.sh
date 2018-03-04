@@ -17,18 +17,24 @@ HEALTH_HOST="${DEFAULT_HEALTH_HOST:-localhost}" #provide DEFAULT_HEALT HOST as h
 RABBIT_MQ_PORT="${RABBIT_MQ_PORT:-9672}"
 SYSTEM_PROPS="-Dspring.rabbitmq.host=${HEALTH_HOST} -Dspring.rabbitmq.port=${RABBIT_MQ_PORT} -Dendpoints.default.web.enabled=true"
 
-# ${RETRIES} number of times will try to curl to /health endpoint to passed port $1 and localhost
+# ${RETRIES} number of times will try to curl to /actuator/health endpoint to passed port $1 and localhost
 function wait_for_app_to_boot_on_port() {
-    curl_health_endpoint $1 "127.0.0.1"
+    curl_health_endpoint $1 "127.0.0.1" "actuator/health"
+}
+
+# ${RETRIES} number of times will try to curl to /health endpoint to passed port $1 and localhost
+function wait_for_legacy_app_to_boot_on_port() {
+    curl_health_endpoint $1 "127.0.0.1" "health"
 }
 
 # ${RETRIES} number of times will try to curl to /health endpoint to passed port $1 and host $2
 function curl_health_endpoint() {
     local PASSED_HOST="${2:-$HEALTH_HOST}"
+    local HEALTH_PATH="${3:-actuator/health}"
     local READY_FOR_TESTS=1
     for i in $( seq 1 "${RETRIES}" ); do
         sleep "${WAIT_TIME}"
-        curl -sSf -m 5 "${PASSED_HOST}:$1/actuator/health" && READY_FOR_TESTS=0 && break
+        curl -sSf -m 5 "${PASSED_HOST}:$1/${HEALTH_PATH}" && READY_FOR_TESTS=0 && break
         echo "Fail #$i/${RETRIES}... will try again in [${WAIT_TIME}] seconds"
     done
     if [[ "${READY_FOR_TESTS}" == "1" ]] ; then
@@ -156,7 +162,7 @@ function check_span_names_for_service() {
 function download_zipkin() {
     mkdir zipkin-service || echo "zipkin-service already created"
     pushd zipkin-service
-    mkdir target
+    mkdir target || echo "target already exists"
     cd target
     curl -sSL https://zipkin.io/quickstart.sh | bash -s
     popd

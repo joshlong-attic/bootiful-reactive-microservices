@@ -67,7 +67,7 @@ function run_tests() {
 
     download_zipkin
     java_jar zipkin-service
-    wait_for_app_to_boot_on_port 9411
+    wait_for_legacy_app_to_boot_on_port 9411
 
     send_test_request 9999 "reservations"
     echo -e "\n\nThe ${BOM_VERSION} Reservation client successfully responded to the call"
