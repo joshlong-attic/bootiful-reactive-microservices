@@ -1,5 +1,15 @@
-rabbitmq:
-  image: rabbitmq:management
-  ports:
-    - 9672:5672
-    - 15672
+version: '2'
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+  rabbitmq:
+    image: rabbitmq:management
+    ports:
+      - 9672:5672
+      - 15672
+  redis:
+    image: redis:alpine
+    ports:
+      - 6379:6379

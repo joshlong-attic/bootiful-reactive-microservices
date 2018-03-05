@@ -6,6 +6,10 @@ set -e
 
 export BOM_VERSION="Finchley.BUILD-SNAPSHOT"
 export PROFILE="finchley"
+export EXTERNAL_IP
+EXTERNAL_IP="$( "${ROOT_FOLDER}"/scripts/whats_my_ip.sh )"
+
+echo "External IP equals [${EXTERNAL_IP}]"
 
 echo "Ensure that apps are not running"
 kill_all_apps
@@ -42,13 +46,10 @@ We will do it in the following way:
 
 EOF
 
-echo "Starting RabbitMQ on port 9672 with docker-compose"
-docker-compose up -d || echo "RabbitMQ seems to be working already or some other exception occurred"
-
-cd ${ROOT_FOLDER}/${PROFILE}
-
 # Runs tests for a given language (java / kotlin)
 function run_tests() {
+    setup_infra
+    cd ${ROOT_FOLDER}/${PROFILE}
     echo "Running tests for ${1}"
     pushd "${ROOT_FOLDER}/${PROFILE}/${1}"
     java_jar config-service
@@ -69,12 +70,11 @@ function run_tests() {
     java_jar zipkin-service
     wait_for_legacy_app_to_boot_on_port 9411
 
-    send_test_request 9999 "reservations"
+    send_test_request 9999 "reservations/names/"
     echo -e "\n\nThe ${BOM_VERSION} Reservation client successfully responded to the call"
 
     check_trace
     check_span_names
-    kill_all
     popd
 }
 
@@ -82,4 +82,6 @@ function run_tests() {
 cd ${ROOT_FOLDER}
 
 run_tests "java"
+kill_all
 run_tests "kotlin"
+echo "Leaving apps running to click around"

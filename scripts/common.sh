@@ -16,6 +16,8 @@ TEST_PATH="${TEST_PATH:-reservations/names}"
 HEALTH_HOST="${DEFAULT_HEALTH_HOST:-localhost}" #provide DEFAULT_HEALT HOST as host of your docker machine
 RABBIT_MQ_PORT="${RABBIT_MQ_PORT:-9672}"
 SYSTEM_PROPS="-Dspring.rabbitmq.host=${HEALTH_HOST} -Dspring.rabbitmq.port=${RABBIT_MQ_PORT} -Dendpoints.default.web.enabled=true"
+CLI_BOOT_VERSION="${CLI_BOOT_VERSION:-2.0.0.RELEASE}"
+CLI_VERSION="${CLI_VERSION:-1.3.2.RELEASE}"
 
 # ${RETRIES} number of times will try to curl to /actuator/health endpoint to passed port $1 and localhost
 function wait_for_app_to_boot_on_port() {
@@ -217,7 +219,54 @@ function kill_all() {
     kill_app reservation-client
     kill_app reservation-service
     kill_app zipkin-service
-    docker-compose kill && echo "Killed rabbit" && exit 0 || echo "Failed to kill Rabbit" && exit 0
+    docker-compose kill && echo "Killed rabbit" || echo "Failed to kill Rabbit"
+}
+
+function setup_infra() {
+    cd ${ROOT_FOLDER}
+    echo "Starting docker-compose"
+    docker-compose up -d
+    start_kafka
+}
+
+export CLI_PATH
+
+function run_kafka() {
+    local APP_JAVA_PATH="${ROOT_FOLDER}/${BUILD_FOLDER}/"
+    mkdir -p ${APP_JAVA_PATH} || echo "Folder already created"
+    local EXPRESSION="nohup ${CLI_PATH}spring cloud kafka >$APP_JAVA_PATH/kafka.log &"
+    echo -e "\nTrying to run [$EXPRESSION]"
+    eval ${EXPRESSION}
+    pid=$!
+    echo ${pid} > ${APP_JAVA_PATH}/app.pid
+    echo -e "[kafka] process pid is [$pid]"
+    echo -e "Logs are under [target/kafka.log]\n"
+    return 0
+}
+
+function start_kafka() {
+    echo -e "\nCheck if sdkman is installed"
+    SDK_INSTALLED="no"
+    [[ -s "${HOME}/.sdkman/bin/sdkman-init.sh" ]] && yes | source "${HOME}/.sdkman/bin/sdkman-init.sh"
+    sdk version && SDK_INSTALLED="true" || echo "Failed to execute SDKman"
+    CLI_PATH="${HOME}/.sdkman/candidates/springboot/${CLI_BOOT_VERSION}/bin/"
+    if [[ "${SDK_INSTALLED}" == "no" ]] ; then
+      echo "Installing SDKman"
+      curl -s "https://get.sdkman.io" | bash
+      source "${HOME}/.sdkman/bin/sdkman-init.sh"
+    fi
+    echo -e "\nInstalling spring boot [${CLI_BOOT_VERSION}] and spring cloud [${CLI_VERSION}] plugins"
+    yes | sdk use springboot "${CLI_BOOT_VERSION}"
+    echo "Path to Spring CLI [${CLI_PATH}]"
+    yes | "${CLI_PATH}"spring install org.springframework.cloud:spring-cloud-cli:${CLI_VERSION}
+    echo -e "\nPrinting versions"
+    ${CLI_PATH}spring version
+    ${CLI_PATH}spring cloud --version
+
+    echo -e "\nRunning Kafka"
+    run_kafka
+    echo "Waiting for Kafka to boot for [10] seconds"
+    sleep 10
 }
 
 export WAIT_TIME
@@ -246,4 +295,4 @@ if [[ ! -e "${ROOT_FOLDER}/.git" ]]; then
     fi
 fi
 
-mkdir -p ${ROOT_FOLDER}/${BUILD_FOLDER}
+mkdir -p "${ROOT_FOLDER}/${BUILD_FOLDER}"
