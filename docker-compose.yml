@@ -5,10 +5,10 @@ services:
     ports:
       - 9672:5672
       - 15672
+  mongo:
+    image: mongo:jessie
+    ports: ["29017:27017"]
   redis:
     image: redis:alpine
     ports:
       - 6379:6379
-  mongo:
-    image: mongo:jessie
-    ports: ["27017:27017"]

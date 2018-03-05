@@ -17,7 +17,8 @@ HEALTH_HOST="${DEFAULT_HEALTH_HOST:-localhost}" #provide DEFAULT_HEALT HOST as h
 export RABBIT_MQ_PORT="${RABBIT_MQ_PORT:-9672}"
 export KAFKA_PORT=7092
 export ZK_PORT=4181
-SYSTEM_PROPS="-Dspring.rabbitmq.host=${HEALTH_HOST} -Dspring.rabbitmq.port=${RABBIT_MQ_PORT} -Dendpoints.default.web.enabled=true -Dspring.kafka.bootstrapServers=localhost:${KAFKA_PORT}"
+export MONGO_DB_PORT=29017
+SYSTEM_PROPS="-Dspring.rabbitmq.host=${HEALTH_HOST} -Dspring.rabbitmq.port=${RABBIT_MQ_PORT} -Dendpoints.default.web.enabled=true -Dspring.kafka.bootstrapServers=localhost:${KAFKA_PORT} -Dspring.data.mongodb.port=${MONGO_DB_PORT}"
 CLI_BOOT_VERSION="${CLI_BOOT_VERSION:-2.0.0.RELEASE}"
 CLI_VERSION="${CLI_VERSION:-1.3.2.RELEASE}"
 
