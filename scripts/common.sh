@@ -77,6 +77,27 @@ function java_jar() {
     return 0
 }
 
+# Runs the `java -jar` for given application $1 and system properties $2
+function java_jar_zipkin() {
+    echo -e "\n\nStarting Zipkin\n"
+    local APP_JAVA_PATH="zipkin-service/${BUILD_FOLDER}"
+    pushd "${APP_JAVA_PATH}"
+    local EXPRESSION="KAFKA_BOOTSTRAP_SERVERS=127.0.0.1:9092 nohup \
+    ${JAVA_PATH_TO_BIN}java \
+    -Dloader.path='kafka10.jar,kafka10.jar!/lib' \
+    -Dspring.profiles.active=kafka \
+    -cp zipkin.jar \
+    org.springframework.boot.loader.PropertiesLauncher >nohup.log &"
+    echo -e "\nTrying to run [$EXPRESSION]"
+    eval ${EXPRESSION}
+    pid=$!
+    echo ${pid} > app.pid
+    echo -e "[zipkin-service] process pid is [$pid]"
+    echo -e "Logs are under [$APP_JAVA_PATH/nohup.log]\n"
+    popd
+    return 0
+}
+
 # Kills an app with given $1 version
 function kill_app() {
     echo -e "Killing app $1"
@@ -167,6 +188,7 @@ function download_zipkin() {
     mkdir target || echo "target already exists"
     cd target
     curl -sSL https://zipkin.io/quickstart.sh | bash -s
+    curl -sSL https://zipkin.io/quickstart.sh | bash -s io.zipkin.java:zipkin-autoconfigure-collector-kafka10:LATEST:module kafka10.jar
     popd
 }
 
@@ -219,6 +241,7 @@ function kill_all() {
     kill_app reservation-client
     kill_app reservation-service
     kill_app zipkin-service
+    kill_app kafka
     docker-compose kill && echo "Killed rabbit" || echo "Failed to kill Rabbit"
 }
 

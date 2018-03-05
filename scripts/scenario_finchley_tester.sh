@@ -67,7 +67,7 @@ function run_tests() {
     check_app_presence_in_discovery RESERVATION-SERVICE
 
     download_zipkin
-    java_jar zipkin-service
+    java_jar_zipkin
     wait_for_legacy_app_to_boot_on_port 9411
 
     send_test_request 9999 "reservations/names/"
