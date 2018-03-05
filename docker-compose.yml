@@ -1,9 +1,5 @@
 version: '2'
 services:
-  zookeeper:
-    image: wurstmeister/zookeeper
-    ports:
-      - "2181:2181"
   rabbitmq:
     image: rabbitmq:management
     ports:

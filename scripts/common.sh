@@ -14,8 +14,9 @@ BUILD_FOLDER="${BUILD_FOLDER:-target}" #target - maven, build - gradle
 PRESENCE_CHECK_URL="${PRESENCE_CHECK_URL:-http://localhost:8761/eureka/apps}"
 TEST_PATH="${TEST_PATH:-reservations/names}"
 HEALTH_HOST="${DEFAULT_HEALTH_HOST:-localhost}" #provide DEFAULT_HEALT HOST as host of your docker machine
-RABBIT_MQ_PORT="${RABBIT_MQ_PORT:-9672}"
-SYSTEM_PROPS="-Dspring.rabbitmq.host=${HEALTH_HOST} -Dspring.rabbitmq.port=${RABBIT_MQ_PORT} -Dendpoints.default.web.enabled=true"
+export RABBIT_MQ_PORT="${RABBIT_MQ_PORT:-9672}"
+export KAFKA_PORT=7092
+SYSTEM_PROPS="-Dspring.rabbitmq.host=${HEALTH_HOST} -Dspring.rabbitmq.port=${RABBIT_MQ_PORT} -Dendpoints.default.web.enabled=true -Dspring.kafka.bootstrapServers=localhost:${KAFKA_PORT}"
 CLI_BOOT_VERSION="${CLI_BOOT_VERSION:-2.0.0.RELEASE}"
 CLI_VERSION="${CLI_VERSION:-1.3.2.RELEASE}"
 
@@ -82,7 +83,7 @@ function java_jar_zipkin() {
     echo -e "\n\nStarting Zipkin\n"
     local APP_JAVA_PATH="zipkin-service/${BUILD_FOLDER}"
     pushd "${APP_JAVA_PATH}"
-    local EXPRESSION="KAFKA_BOOTSTRAP_SERVERS=127.0.0.1:9092 nohup \
+    local EXPRESSION="KAFKA_BOOTSTRAP_SERVERS=127.0.0.1:${KAFKA_PORT} nohup \
     ${JAVA_PATH_TO_BIN}java \
     -Dloader.path='kafka10.jar,kafka10.jar!/lib' \
     -Dspring.profiles.active=kafka \
@@ -268,6 +269,7 @@ function run_kafka() {
 }
 
 function start_kafka() {
+    echo "Will run Kafka on port [${KAFKA_PORT}]"
     echo -e "\nCheck if sdkman is installed"
     SDK_INSTALLED="no"
     [[ -s "${HOME}/.sdkman/bin/sdkman-init.sh" ]] && yes | source "${HOME}/.sdkman/bin/sdkman-init.sh"
