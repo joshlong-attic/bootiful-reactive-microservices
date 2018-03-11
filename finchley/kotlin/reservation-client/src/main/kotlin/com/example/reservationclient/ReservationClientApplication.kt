@@ -77,12 +77,15 @@ class ReservationClientApplication() {
 					.build()
 
 	@Bean
-	fun gateway(rlb: RouteLocatorBuilder) =
+	fun rateLimiter() = RedisRateLimiter(4, 6)
+
+	@Bean
+	fun gateway(rlb: RouteLocatorBuilder, rl: RedisRateLimiter) =
 			rlb.routes {
 				route {
 					path("/rl")
 					filters {
-						requestRateLimiter(RedisRateLimiter.args(2, 4))
+						requestRateLimiter({ it.rateLimiter = rl })
 						setPath("/reservations")
 					}
 					uri("lb://reservation-service")
