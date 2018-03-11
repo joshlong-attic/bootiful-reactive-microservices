@@ -16,22 +16,17 @@ import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.cloud.stream.messaging.Source;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.redis.core.ReactiveRedisTemplate;
-import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.server.SecurityWebFilterChain;
-import org.springframework.validation.Validator;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
-
-import java.util.List;
 
 import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
 import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
@@ -111,9 +106,7 @@ public class ReservationClientApplication {
 						spec
 								.path("/rl")
 								.filters(fs -> fs
-										.requestRateLimiter()
-										.rateLimiter(RedisRateLimiter.class, c -> c.setBurstCapacity(3).setReplenishRate(4))
-										.and()
+										.requestRateLimiter(c -> c.setRateLimiter(redisRateLimiter))
 										.setPath("/reservations"))
 								.uri("lb://reservation-service/"))
 				.route(spec ->
@@ -125,10 +118,8 @@ public class ReservationClientApplication {
 	}
 
 	@Bean
-	RedisRateLimiter redisRateLimiter(ReactiveRedisTemplate<String, String> rt,
-	                                  RedisScript<List<Long>> rs,
-	                                  Validator v) {
-		return new RedisRateLimiter(rt, rs, v);
+	RedisRateLimiter redisRateLimiter() {
+		return new RedisRateLimiter(4, 6);
 	}
 
 	public static void main(String[] args) {
