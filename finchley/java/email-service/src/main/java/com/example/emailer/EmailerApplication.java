@@ -27,6 +27,9 @@ public class EmailerApplication {
 		Function<String, String> email(WebClient client) {
 				return input -> {
 
+
+						// todo send an email w/ sendgrid
+
 						client
 							.get()
 							.uri("http://reservation-service/reservations")
