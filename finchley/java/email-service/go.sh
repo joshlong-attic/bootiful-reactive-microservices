@@ -1,7 +1,18 @@
+#!/usr/bin/env bash
+
+eval $(minikube docker-env)
+
 mvn -DskipTests=true clean package
 
+# delete existing function 
 riff delete -n emailer --all
 
-riff create java -a target/emailer-0.0.1-SNAPSHOT.jar -i emailer -n emailer --handler "email&main=com.example.emailer.EmailerApplication"
+# logical name
+app=emailer
 
-riff publish -i emailer -d '{"reservationId":"22" }' -r --content-type "application/json"  
+# deploy 
+riff create java -a target/${app}-0.0.1-SNAPSHOT.jar --force -i $app -n $app --handler "email&main=com.example.emailer.EmailerApplication"
+
+# shortcut for `curl 
+riff publish -i $app -d 'hello world' -r
+
