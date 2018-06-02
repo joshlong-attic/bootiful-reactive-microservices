@@ -15,11 +15,7 @@ import java.util.function.Function;
 
 @SpringBootApplication
 public class EmailerApplication {
-/*
-		@Bean
-		WebClient client(LoadBalancerExchangeFilterFunction eff) {
-				return WebClient.builder().filter(eff).build();
-		}*/
+
 
 		@Bean
 		@LoadBalanced
@@ -28,9 +24,9 @@ public class EmailerApplication {
 		}
 
 		@Bean
-		Function<Flux<EmailRequest>, Flux<EmailResponse>> email(
-			DiscoveryClient client,
-			RestTemplate restTemplate) {
+		Function<Flux<String>, Flux<String>> email(
+			DiscoveryClient client
+			/*		RestTemplate restTemplate*/) {
 
 				return in -> {
 
@@ -38,7 +34,7 @@ public class EmailerApplication {
 							.getInstances("reservation-service")
 							.forEach(r -> System.out.println(r.toString()));
 
-						return Flux.just(new EmailResponse("", true));
+						return Flux.just("done");
 				};
 		}
 
@@ -52,7 +48,9 @@ public class EmailerApplication {
 @AllArgsConstructor
 @NoArgsConstructor
 class EmailResponse {
+
 		private String reservationId;
+
 		private boolean sent = true;
 }
 
@@ -60,5 +58,6 @@ class EmailResponse {
 @AllArgsConstructor
 @NoArgsConstructor
 class EmailRequest {
+
 		private String reservationId;
 }
