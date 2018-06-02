@@ -1,0 +1,10 @@
+---
+apiVersion: projectriff.io/v1alpha1
+kind: Function
+metadata:
+  name: emailer
+spec:
+  container:
+    image: jlong/emailer:0.0.1
+  input: emailer
+  protocol: grpc
