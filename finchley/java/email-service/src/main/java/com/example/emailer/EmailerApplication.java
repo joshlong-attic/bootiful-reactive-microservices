@@ -18,7 +18,7 @@ public class EmailerApplication {
 
 
 		@Bean
-		@LoadBalanced
+//		@LoadBalanced
 		RestTemplate restTemplate() {
 				return new RestTemplate();
 		}
@@ -30,6 +30,7 @@ public class EmailerApplication {
 
 				return in -> {
 
+						System.out.println("hello, world! ");
 						client
 							.getInstances("reservation-service")
 							.forEach(r -> System.out.println(r.toString()));

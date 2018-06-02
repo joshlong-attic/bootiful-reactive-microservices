@@ -1,3 +1,6 @@
+mvn -DskipTests=true clean package
+
+riff delete -n emailer --all
 
 riff create java -a target/emailer-0.0.1-SNAPSHOT.jar -i emailer -n emailer --handler "email&main=com.example.emailer.EmailerApplication"
 
