@@ -30,7 +30,6 @@ public class EmailerApplication {
 				return WebClient.builder().filter(eff).build();
 		}
 
-
 		@Bean
 		Function<EmailRequest, Boolean> email(WebClient client, SendGrid sg) {
 				return input -> {
