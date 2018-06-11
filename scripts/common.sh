@@ -87,10 +87,7 @@ function java_jar_zipkin() {
     pushd "${APP_JAVA_PATH}"
     local EXPRESSION="KAFKA_BOOTSTRAP_SERVERS=127.0.0.1:${KAFKA_PORT} nohup \
     ${JAVA_PATH_TO_BIN}java \
-    -Dloader.path='kafka10.jar,kafka10.jar!/lib' \
-    -Dspring.profiles.active=kafka \
-    -cp zipkin.jar \
-    org.springframework.boot.loader.PropertiesLauncher >nohup.log &"
+    -jar zipkin.jar >nohup.log &"
     echo -e "\nTrying to run [$EXPRESSION]"
     eval ${EXPRESSION}
     pid=$!
@@ -191,7 +188,6 @@ function download_zipkin() {
     mkdir target || echo "target already exists"
     cd target
     curl -sSL https://zipkin.io/quickstart.sh | bash -s
-    curl -sSL https://zipkin.io/quickstart.sh | bash -s io.zipkin.java:zipkin-autoconfigure-collector-kafka10:LATEST:module kafka10.jar
     popd
 }
 
