@@ -78,10 +78,16 @@ public class ReservationClientApplication {
 				return new RedisRateLimiter(5, 7);
 		}
 
-		@Bean
-		WebClient client(LoadBalancerExchangeFilterFunction eff) {
-				return WebClient.builder().filter(eff).build();
-		}
+	
+	
+	
+  @Bean
+  WebClient client(LoadBalancerExchangeFilterFunction eff) {
+    return WebClient.builder().filter(eff).build();
+  }
+	
+	
+	
 
 		@Bean
 		RouteLocator gateway(RouteLocatorBuilder rlb) {
