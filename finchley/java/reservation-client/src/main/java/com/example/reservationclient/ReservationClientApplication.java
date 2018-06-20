@@ -29,13 +29,6 @@ import static org.springframework.web.reactive.function.server.RouterFunctions.r
 public class ReservationClientApplication {
 
 		@Bean
-		MapReactiveUserDetailsService authentication() {
-				return new MapReactiveUserDetailsService(
-					User.withDefaultPasswordEncoder().username("user").password("pw").roles("USER").build()
-				);
-		}
-
-		@Bean
 		RouterFunction<ServerResponse> routes(WebClient client) {
 				return route(GET("/reservations/names"), r -> {
 
@@ -58,6 +51,13 @@ public class ReservationClientApplication {
 				});
 		}
 
+		@Bean
+		MapReactiveUserDetailsService authentication() {
+				return new MapReactiveUserDetailsService(
+					User.withDefaultPasswordEncoder().username("user").password("pw").roles("USER").build()
+				);
+		}
+	
 		@Bean
 		SecurityWebFilterChain authorization(ServerHttpSecurity security) {
 				//@formatter:off
