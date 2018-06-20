@@ -44,6 +44,8 @@ public class ReservationServiceApplication {
 }
 
 interface ReservationRepository extends ReactiveMongoRepository<Reservation, String> {
+	
+ Flux<Reservation> findByEmail(String email);
 }
 
 @Document
