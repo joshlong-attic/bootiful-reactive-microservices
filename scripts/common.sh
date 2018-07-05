@@ -138,7 +138,7 @@ function check_trace() {
     echo -e "\nChecking if Zipkin has stored the trace"
     local STRING_TO_FIND="\"parent\":\"reservation-client\",\"child\":\"reservation-service\""
     local CURRENT_TIME=`python -c 'import time; print int(round(time.time() * 1000))'`
-    local URL_TO_CALL="http://localhost:9411/api/v1/dependencies?endTs=$CURRENT_TIME"
+    local URL_TO_CALL="http://localhost:9411/api/v2/dependencies?endTs=$CURRENT_TIME"
     READY_FOR_TESTS="no"
     for i in $( seq 1 "${RETRIES}" ); do
         sleep "${WAIT_TIME}"
@@ -193,8 +193,8 @@ function download_zipkin() {
 
 # Calls a GET to zipkin to check span names for services
 function check_span_names() {
-    local RESERVATION_CLIENT_URL_TO_CALL="http://localhost:9411/api/v1/spans?serviceName=reservation-client"
-    local RESERVATION_SERVICE_URL_TO_CALL="http://localhost:9411/api/v1/spans?serviceName=reservation-service"
+    local RESERVATION_CLIENT_URL_TO_CALL="http://localhost:9411/api/v2/spans?serviceName=reservation-client"
+    local RESERVATION_SERVICE_URL_TO_CALL="http://localhost:9411/api/v2/spans?serviceName=reservation-service"
     local EXPECTED_RESERVATION_CLIENT_ENTRIES=("http:/reservations","http:/reservations/names","names")
     local EXPECTED_RESERVATION_SERVICE_ENTRIES=("get-collection-resource","http:/reservations")
 
