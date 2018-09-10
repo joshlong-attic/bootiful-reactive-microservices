@@ -242,6 +242,7 @@ function kill_all() {
     kill_app zipkin-service
     kill_app kafka
     docker-compose kill && echo "Killed rabbit" || echo "Failed to kill Rabbit"
+    docker ps -a -q | xargs -n 1 -P 8 -I {} docker stop {} || echo "Oops"
 }
 
 function setup_infra() {
@@ -319,3 +320,4 @@ if [[ ! -e "${ROOT_FOLDER}/.git" ]]; then
 fi
 
 mkdir -p "${ROOT_FOLDER}/${BUILD_FOLDER}"
+trap "{ kill_all; }" EXIT
