@@ -19,8 +19,8 @@ export KAFKA_PORT=7092
 export ZK_PORT=4181
 export MONGO_DB_PORT=29017
 SYSTEM_PROPS="-Dspring.rabbitmq.host=${HEALTH_HOST} -Dspring.rabbitmq.port=${RABBIT_MQ_PORT} -Dendpoints.default.web.enabled=true -Dspring.kafka.bootstrapServers=localhost:${KAFKA_PORT} -Dspring.data.mongodb.port=${MONGO_DB_PORT}"
-CLI_BOOT_VERSION="${CLI_BOOT_VERSION:-2.0.0.RELEASE}"
-CLI_VERSION="${CLI_VERSION:-1.3.2.RELEASE}"
+CLI_BOOT_VERSION="${CLI_BOOT_VERSION:-2.0.4.RELEASE}"
+CLI_VERSION="${CLI_VERSION:-2.0.0.RELEASE}"
 
 # ${RETRIES} number of times will try to curl to /actuator/health endpoint to passed port $1 and localhost
 function wait_for_app_to_boot_on_port() {
@@ -241,8 +241,10 @@ function kill_all() {
     kill_app reservation-service
     kill_app zipkin-service
     kill_app kafka
-    docker-compose kill && echo "Killed rabbit" || echo "Failed to kill Rabbit"
-    docker ps -a -q | xargs -n 1 -P 8 -I {} docker stop {} || echo "Oops"
+    pkill -f "redis-server" && echo "Killed redis" || echo "No redis server running"
+    docker-compose kill && echo "Killed docker-compose" || echo "Failed to kill docker-compose"
+    if [ -n "$(type -t timeout)" ]; then timeout 10s docker ps -a -q | xargs -n 1 -P 8 -I {} docker stop {} || echo "Failed to stop docker... Hopefully you know what you're doing"; fi
+    if [ -n "$(type gtimeout)" ]; then gtimeout 10s docker ps -a -q | xargs -n 1 -P 8 -I {} docker stop {} || echo "Failed to stop docker... Hopefully you know what you're doing"; fi
 }
 
 function setup_infra() {

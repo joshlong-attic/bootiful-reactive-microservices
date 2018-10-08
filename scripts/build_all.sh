@@ -4,7 +4,7 @@ source common.sh || source scripts/common.sh || echo "No common.sh script found.
 
 PROFILE="${PROFILE:-finchley}"
 BOM_VERSION="${BOM_VERSION:-Finchley.BUILD-SNAPSHOT}"
-ADDITIONAL_MAVEN_OPTS="${ADDITIONAL_MAVEN_OPTS:--Dspring.cloud.release.version=$BOM_VERSION}"
+ADDITIONAL_MAVEN_OPTS="${ADDITIONAL_MAVEN_OPTS:--Dspring-cloud.version=$BOM_VERSION -Dspring.cloud.release.version=$BOM_VERSION}"
 
 set -e
 

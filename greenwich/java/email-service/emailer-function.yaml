@@ -1,0 +1,16 @@
+---
+apiVersion: projectriff.io/v1alpha1
+kind: Function
+metadata:
+  name: emailer
+spec:
+  container:
+    image: jlong/emailer:0.0.1
+    env:
+      - name: SENDGRID_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name : sendgrid-api-key
+            key: sendgrid-api-key
+  input: emailer
+  protocol: grpc
