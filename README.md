@@ -20,7 +20,7 @@ Now, in 2018, everything is bigger and better!
 in my new 6h workshop (after reactive and Finchley) i will cover:
 
  - REST (reactive w/ WebFlux)
- - data access (reactive w/ MongoDB)
+ - data access (reactive w/ MongoDB or R2DBC)
  - observability w/ actuator (still works, but its micrometer)
  - service registration & discovery w/ Consul
  - client side load balancing w/ Consul
@@ -33,3 +33,4 @@ in my new 6h workshop (after reactive and Finchley) i will cover:
  - microservice testing w/ Spring Cloud Contract (i havent tries this yet in a reactive world)
  - Kotlin
  - edge services /microproxies/api gateways w Spring Cloud Gateay
+ - RSocket.io
