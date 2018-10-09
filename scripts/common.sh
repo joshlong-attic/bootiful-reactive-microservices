@@ -253,7 +253,7 @@ function kill_all() {
 function setup_infra() {
     cd ${ROOT_FOLDER}
     echo "Starting docker-compose"
-    docker-compose up -d
+    docker-compose up -d || echo "Failed to start something - hopefully you have it already running"
     start_kafka
 }
 
