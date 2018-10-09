@@ -8,12 +8,14 @@ import io.rsocket.util.DefaultPayload;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.reactivestreams.Publisher;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
+import org.springframework.cloud.netflix.hystrix.HystrixCommands;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -42,30 +44,34 @@ public class ReservationClientApplication {
 	}
 
 	@Bean
-	RouterFunction<ServerResponse> routes(ReservationClient client) {
-		return route(GET("/reservations/names"),
-			request -> {
-/*
+	RouterFunction<ServerResponse> routes(ReservationClient client
+		/* WebClient client */
+	) {
+		return route(GET("/reservations/names"), request -> {
+
+			/*
 				Flux<String> stringFlux = client
 					.get()
 					.uri("http://reservation-service/reservations")
 					.retrieve()
 					.bodyToFlux(Reservation.class)
-					.map(Reservation::getReservationName);*/
+					.map(Reservation::getReservationName);
+			*/
 
-				Flux<String> allReservations = client.getAllReservations()
-					.map(r -> r.getReservationName());
+			Flux<String> allReservations = client
+				.getAllReservations()
+				.map(Reservation::getReservationName);
 
-				/*Publisher<String> stringPublisher = HystrixCommands
-					.from(stringFalux)
+			Publisher<String> namesFallback =
+				HystrixCommands
+					.from(allReservations)
 					.eager()
 					.commandName("names")
 					.fallback(Flux.just("EEK!"))
 					.build();
 
-				*/
-				return ServerResponse.ok().body(allReservations, String.class);
-			});
+			return ServerResponse.ok().body(namesFallback, String.class);
+		});
 	}
 
 	public static void main(String[] args) {
@@ -74,11 +80,10 @@ public class ReservationClientApplication {
 
 	@Bean
 	MapReactiveUserDetailsService authentication() {
+		User.UserBuilder builder = User.withDefaultPasswordEncoder();
 		return new MapReactiveUserDetailsService(
-			User.withDefaultPasswordEncoder()
-				.username("jlong").password("pw").roles("USER").build(),
-			User.withDefaultPasswordEncoder()
-				.username("rwinch").password("pw").roles("USER", "ADMIN").build()
+			builder.username("jlong").password("pw").roles("USER").build(),
+			builder.username("rwinch").password("pw").roles("USER", "ADMIN").build()
 		);
 	}
 
@@ -107,20 +112,15 @@ public class ReservationClientApplication {
 					rSpec -> rSpec
 						.host("*.foo.com").and().path("/proxy")
 						.filters(
-							gatewayFilterSpec ->
-								gatewayFilterSpec
-									.addResponseHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*")
-									.setPath("/reservations")
-									.requestRateLimiter(
-										config -> config
-											.setRateLimiter(redisRateLimiter())
-									)
+							spec -> spec
+								.addResponseHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*")
+								.setPath("/reservations")
+								.requestRateLimiter(config -> config.setRateLimiter(redisRateLimiter()))
 						)
 						.uri("lb://reservation-service")
 				)
 				.build();
 	}
-
 }
 
 @Data
@@ -131,7 +131,6 @@ class Reservation {
 	private String id;
 	private String reservationName;
 }
-
 
 @Component
 class ReservationClient {
@@ -149,24 +148,23 @@ class ReservationClient {
 
 		return RSocketFactory
 			.connect()
-			.transport(localhost)
+			.transport(this.localhost)
 			.start()
 			.flatMapMany(socket ->
 				socket
 					.requestStream(DefaultPayload.create(new byte[0]))
 					.map(Payload::getDataUtf8)
-					.map(this::from)
+					.map(obj -> {
+						try {
+							return this.objectMapper
+								.readValue(obj, Reservation.class);
+						}
+						catch (IOException e) {
+							throw new RuntimeException(e);
+						}
+					})
 					.doFinally(signal -> socket.dispose())
 			);
 	}
 
-	private Reservation from(String obj) {
-		try {
-			return this.objectMapper
-				.readValue(obj, Reservation.class);
-		}
-		catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
 }
