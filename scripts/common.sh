@@ -244,6 +244,7 @@ function kill_all() {
     kill_app zipkin-service
     kill_app kafka
     pkill -f "redis-server" && echo "Killed redis" || echo "No redis server running"
+    kill -9 $(lsof -t -i:6379) && echo "Killed redis" || echo "Failed to kill app running at port"
     docker-compose kill && echo "Killed docker-compose" || echo "Failed to kill docker-compose"
     if [ -n "$(type -t timeout)" ]; then timeout 10s docker ps -a -q | xargs -n 1 -P 8 -I {} docker stop {} || echo "Failed to stop docker... Hopefully you know what you're doing"; fi
     if [ -n "$(type gtimeout)" ]; then gtimeout 10s docker ps -a -q | xargs -n 1 -P 8 -I {} docker stop {} || echo "Failed to stop docker... Hopefully you know what you're doing"; fi
