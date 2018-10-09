@@ -276,7 +276,7 @@ function start_kafka() {
     echo "Will run Kafka on port [${KAFKA_PORT}]"
     echo -e "\nCheck if sdkman is installed"
     SDK_INSTALLED="no"
-    [[ -s "${HOME}/.sdkman/bin/sdkman-init.sh" ]] && yes | source "${HOME}/.sdkman/bin/sdkman-init.sh"
+    [[ -s "${HOME}/.sdkman/bin/sdkman-init.sh" ]] && yes | source "${HOME}/.sdkman/bin/sdkman-init.sh" || echo "Failed to source sdkman"
     sdk version && SDK_INSTALLED="true" || echo "Failed to execute SDKman"
     CLI_PATH="${HOME}/.sdkman/candidates/springboot/${CLI_BOOT_VERSION}/bin/"
     if [[ "${SDK_INSTALLED}" == "no" ]] ; then
