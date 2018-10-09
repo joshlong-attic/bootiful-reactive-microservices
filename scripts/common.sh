@@ -272,6 +272,8 @@ function run_kafka() {
     return 0
 }
 
+SDK_BIN="${SDK_BIN:sdk}"
+
 function start_kafka() {
     echo "Will run Kafka on port [${KAFKA_PORT}]"
     echo -e "\nCheck if sdkman is installed"
@@ -285,12 +287,12 @@ function start_kafka() {
       source "${HOME}/.sdkman/bin/sdkman-init.sh"
     fi
     echo -e "\nInstalling spring boot [${CLI_BOOT_VERSION}] and spring cloud [${CLI_VERSION}] plugins"
-    yes | sdk use springboot "${CLI_BOOT_VERSION}"
+    yes | "${SDK_BIN}" use springboot "${CLI_BOOT_VERSION}" || echo "No spring boot"
     echo "Path to Spring CLI [${CLI_PATH}]"
-    yes | "${CLI_PATH}"spring install org.springframework.cloud:spring-cloud-cli:${CLI_VERSION}
+    yes | "${CLI_PATH}"spring install org.springframework.cloud:spring-cloud-cli:${CLI_VERSION} || echo "Sth went wrong with spring boot cli :("
     echo -e "\nPrinting versions"
-    ${CLI_PATH}spring version
-    ${CLI_PATH}spring cloud --version
+    ${CLI_PATH}spring version || echo "Spring Boot CLI Didn't work"
+    ${CLI_PATH}spring cloud --version || echo "Spring Cloud CLI Didn't work"
 
     echo -e "\nRunning Kafka"
     run_kafka
