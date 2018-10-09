@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-set -e
+set -o errexit
+set -o errtrace
+set -o pipefail
 
 WAIT_TIME="${WAIT_TIME:-5}"
 RETRIES="${RETRIES:-30}"

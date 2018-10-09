@@ -6,7 +6,9 @@ PROFILE="${PROFILE:-finchley}"
 BOM_VERSION="${BOM_VERSION:-Finchley.BUILD-SNAPSHOT}"
 ADDITIONAL_MAVEN_OPTS="${ADDITIONAL_MAVEN_OPTS:--Dspring-cloud.version=$BOM_VERSION -Dspring.cloud.release.version=$BOM_VERSION}"
 
-set -e
+set -o errexit
+set -o errtrace
+set -o pipefail
 
 cd $ROOT_FOLDER
 

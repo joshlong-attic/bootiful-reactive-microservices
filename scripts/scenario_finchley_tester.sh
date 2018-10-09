@@ -2,7 +2,9 @@
 
 source common.sh || source scripts/common.sh || echo "No common.sh script found..."
 
-set -e
+set -o errexit
+set -o errtrace
+set -o pipefail
 
 export BOM_VERSION="Finchley.BUILD-SNAPSHOT"
 export PROFILE="finchley"
