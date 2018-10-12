@@ -54,18 +54,20 @@ function run_tests() {
     cd ${ROOT_FOLDER}/${PROFILE}
     echo "Running tests for ${1}"
     pushd "${ROOT_FOLDER}/${PROFILE}/${1}"
-    java_jar config-service
+    java_jar config-service "-Dserver.port=8888"
     wait_for_app_to_boot_on_port 8888
 
-    java_jar eureka-service
+    java_jar eureka-service "-Dserver.port=8761"
     wait_for_app_to_boot_on_port 8761
 
-    java_jar reservation-client
-    wait_for_app_to_boot_on_port 9999
+    clientPort="9999"
+    java_jar reservation-client "-Dserver.port=${clientPort}"
+    wait_for_app_to_boot_on_port "${clientPort}"
     check_app_presence_in_discovery RESERVATION-CLIENT
 
-    java_jar reservation-service
-    wait_for_app_to_boot_on_port 8000
+    serverPort="8000"
+    java_jar reservation-service "-Dserver.port=${serverPort}"
+    wait_for_app_to_boot_on_port "${serverPort}"
     check_app_presence_in_discovery RESERVATION-SERVICE
 
     download_zipkin
