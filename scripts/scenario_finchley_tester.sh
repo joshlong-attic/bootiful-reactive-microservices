@@ -70,15 +70,16 @@ function run_tests() {
     wait_for_app_to_boot_on_port "${serverPort}"
     check_app_presence_in_discovery RESERVATION-SERVICE
 
-    download_zipkin
-    java_jar_zipkin
-    wait_for_legacy_app_to_boot_on_port 9411
+    #download_zipkin
+    #java_jar_zipkin
+    #wait_for_legacy_app_to_boot_on_port 9411
 
-    send_test_request 9999 "reservations/names/"
-    echo -e "\n\nThe ${BOM_VERSION} Reservation client successfully responded to the call"
+    #send_test_request 9999 "reservations/names/"
+    #echo -e "\n\nThe ${BOM_VERSION} Reservation client successfully responded to the call"
 
-    check_trace
-    check_span_names
+    #check_trace
+    #check_span_names
+    echo -e "\n\nWill not check Zipkin since rsocket is used\n\n"
     popd
 }
 
