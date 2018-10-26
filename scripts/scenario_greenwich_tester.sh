@@ -77,8 +77,15 @@ function run_tests() {
     send_test_request 9999 "reservations/names/"
     echo -e "\n\nThe ${BOM_VERSION} Reservation client successfully responded to the call"
 
-    check_trace
-    check_span_names
+    #download_zipkin
+    #java_jar_zipkin
+    #wait_for_legacy_app_to_boot_on_port 9411
+
+    #send_test_request 9999 "reservations/names/"
+    #echo -e "\n\nThe ${BOM_VERSION} Reservation client successfully responded to the call"
+
+    #check_trace
+    #check_span_names
     popd
 }
 
