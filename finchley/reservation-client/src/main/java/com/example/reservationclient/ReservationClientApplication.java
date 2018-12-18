@@ -2,6 +2,7 @@ package com.example.reservationclient;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.rsocket.Payload;
+import io.rsocket.RSocket;
 import io.rsocket.RSocketFactory;
 import io.rsocket.transport.netty.client.TcpClientTransport;
 import io.rsocket.util.DefaultPayload;
@@ -36,53 +37,51 @@ import static org.springframework.web.reactive.function.server.RouterFunctions.r
 @SpringBootApplication
 public class ReservationClientApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(ReservationClientApplication.class, args);
+	@Bean
+	RedisRateLimiter rl() {
+		return new RedisRateLimiter(5, 7);
 	}
 
+	@Bean
+	WebClient webClient(WebClient.Builder builder) {
+		return builder.build();
+	}
+
+	@Bean
+	RouterFunction<ServerResponse> adapter(ReservationClient client) {
+		return route(GET("/reservations/names"), request -> {
+
+			Flux<String> names = client
+				.getAllReservations()
+				.map(Reservation::getName);
+
+			Publisher<String> fallback = HystrixCommands
+				.from(names)
+				.eager()
+				.commandName("names")
+				.fallback(Flux.just("EEK!"))
+				.build();
+
+			return ServerResponse.ok().body(fallback, String.class);
+		});
+	}
 
 	@Bean
 	MapReactiveUserDetailsService authentication() {
-		// @rob_winch became sad :-(
 		UserDetails jlong = User.withDefaultPasswordEncoder().username("jlong").password("pw").roles("USER").build();
 		UserDetails rwinch = User.withDefaultPasswordEncoder().username("rwinch").password("pw").roles("USER", "ADMIN").build();
 		return new MapReactiveUserDetailsService(jlong, rwinch);
 	}
 
 	@Bean
-	SecurityWebFilterChain authorization(ServerHttpSecurity http) {
-		http.httpBasic();
-		http.authorizeExchange()
+	SecurityWebFilterChain authorization(ServerHttpSecurity httpSecurity) {
+		httpSecurity.httpBasic();
+		httpSecurity.csrf().disable();
+		httpSecurity
+			.authorizeExchange()
 			.pathMatchers("/proxy").authenticated()
 			.anyExchange().permitAll();
-		http.csrf().disable();
-		return http.build();
-	}
-
-	@Bean
-	RedisRateLimiter redisRateLimiter() {
-		return new RedisRateLimiter(5, 7);
-	}
-
-
-	@Bean
-	RouterFunction<ServerResponse> adapter(ReservationClient client) {
-		return route(GET("/reservations/names"),
-			serverRequest -> {
-
-				Flux<String> names = client
-					.getAllReservations()
-					.map(Reservation::getReservationName);
-
-				Publisher<String> fallback = HystrixCommands
-					.from(names)
-					.fallback(Flux.just("EEK!"))
-					.commandName("names")
-					.eager()
-					.build();
-
-				return ServerResponse.ok().body(fallback, String.class);
-			});
+		return httpSecurity.build();
 	}
 
 	@Bean
@@ -90,34 +89,70 @@ public class ReservationClientApplication {
 		return rlb
 			.routes()
 			.route(
-				rSpec ->
-					rSpec
-						.host("*.foo.ca").and().path("/proxy")
-						.filters(fSpec -> fSpec
+				routeSpec -> routeSpec
+					.host("*.spring.com").and().path("/proxy")
+					.filters(fSpec ->
+						fSpec
 							.setPath("/reservations")
 							.addResponseHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*")
-							.requestRateLimiter(rc -> rc.setRateLimiter(redisRateLimiter()))
-						)
-						.uri("http://localhost:8080")
+							.requestRateLimiter(rl -> rl
+								.setRateLimiter(rl())
+							)
+					)
+					.uri("http://localhost:8080")
 			)
 			.build();
 	}
 
-	@Bean
-	WebClient client(WebClient.Builder builder) {
-		return builder.build();
+	public static void main(String[] args) {
+		SpringApplication.run(ReservationClientApplication.class, args);
+	}
+}
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+class Reservation {
+
+	private String id;
+	private String name;
+}
+
+
+@Component
+class ReservationClient {
+
+	private final TcpClientTransport tcp = TcpClientTransport.create(7000);
+	private final RSocketFactory.Start<RSocket> transport = RSocketFactory
+		.connect()
+		.transport(this.tcp);
+	private final ObjectMapper objectMapper;
+
+	ReservationClient(ObjectMapper objectMapper) {
+		this.objectMapper = objectMapper;
+	}
+
+	private Reservation from(String json) {
+		try {
+			return this.objectMapper.readValue(json, Reservation.class);
+		}
+		catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	Flux<Reservation> getAllReservations() {
+		return transport
+			.start()
+			.flatMapMany(
+				clientRS -> clientRS.requestStream(DefaultPayload.create(new byte[0]))
+					.map(Payload::getDataUtf8)
+					.map(this::from));
 	}
 
 }
 
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-class Reservation {
-	private Integer id;
-	private String reservationName;
-}
 /*
 
 @Component
@@ -129,44 +164,22 @@ class ReservationClient {
 		this.webClient = webClient;
 	}
 
-	Flux<Reservation> getAllReservations() {
+
+	private Flux<Reservation> forHost(String host) {
 		return this.webClient
 			.get()
-			.uri("http://localhost:8080/reservations")
+			.uri("http://" + host + "/reservations")
 			.retrieve()
 			.bodyToFlux(Reservation.class);
 	}
-}
-*/
-
-
-@Component
-class ReservationClient {
-
-
-	private final ObjectMapper objectMapper;
-
-	ReservationClient(ObjectMapper objectMapper) {
-		this.objectMapper = objectMapper;
-	}
-
-	Reservation from(String json) {
-		try {
-			return this.objectMapper.readValue(json, Reservation.class);
-		}
-		catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
 
 	Flux<Reservation> getAllReservations() {
-		return RSocketFactory
-			.connect()
-			.transport(TcpClientTransport.create(7000))
-			.start()
-			.flatMapMany(rs -> rs.requestStream(DefaultPayload.create(new byte[0])))
-			.map(Payload::getDataUtf8)
-			.map(this::from);
 
+		Flux<Reservation> one = forHost("locahost:8080");
+//		Flux<Reservation> two = forHost("locahost:8081");
+//		Flux<Reservation> three = forHost("locahost:8082");
+		return Flux.first(one);
 	}
+
 }
+*/
