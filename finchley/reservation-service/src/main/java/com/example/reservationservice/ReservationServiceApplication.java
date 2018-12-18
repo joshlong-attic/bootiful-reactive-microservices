@@ -126,11 +126,6 @@ class ReservationRestController {
 		this.reservationRepository = reservationRepository;
 	}
 
-	@GetMapping("/could-fail")
-	ResponseEntity<Publisher<?>> fail() {
-		Flux<String> todo  = null ; // todo
-		return todo.onEr  // josh@Joshlong.com
-	}
 
 	@DeleteMapping("/reservations/{id}")
 	Mono<Void> deleteById(@PathVariable Integer id) {
