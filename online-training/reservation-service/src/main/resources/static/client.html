@@ -1,0 +1,17 @@
+<html>
+<head><title>test</title></head>
+<body onload="handle()">
+
+
+<script>
+    function handle() {
+        const ws = new WebSocket('ws://localhost:8080/ws/greetings');
+        ws.onmessage = (me) => {
+            const fe = me.data;
+            console.log(fe);
+        };
+    }
+
+</script>
+</body>
+</html>
