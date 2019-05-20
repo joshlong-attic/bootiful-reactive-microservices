@@ -189,7 +189,7 @@ function download_zipkin() {
     pushd zipkin-service
     mkdir target || echo "target already exists"
     cd target
-    curl -sSL https://zipkin.io/quickstart.sh | bash -s
+    curl -sSL https://zipkin.apache.org/quickstart.sh | bash -s
     popd
 }
 
