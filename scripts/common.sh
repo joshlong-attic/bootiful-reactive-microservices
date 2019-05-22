@@ -89,6 +89,7 @@ function java_jar_zipkin() {
     pushd "${APP_JAVA_PATH}"
     local EXPRESSION="KAFKA_BOOTSTRAP_SERVERS=127.0.0.1:${KAFKA_PORT} nohup \
     ${JAVA_PATH_TO_BIN}java \
+    -Dzipkin.collector.kafka.overrides.auto.offset.reset=largest
     -jar zipkin.jar >nohup.log &"
     echo -e "\nTrying to run [$EXPRESSION]"
     eval ${EXPRESSION}
