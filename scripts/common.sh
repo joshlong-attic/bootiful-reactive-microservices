@@ -285,6 +285,8 @@ function start_kafka() {
       curl -s "https://get.sdkman.io" | bash
       source "${HOME}/.sdkman/bin/sdkman-init.sh"
     fi
+    echo "Updating SDK man"
+    sdk selfupdate force
     echo -e "\nInstalling spring boot [${CLI_BOOT_VERSION}] and spring cloud [${CLI_VERSION}] plugins"
     yes | sdk use springboot "${CLI_BOOT_VERSION}" || echo "No spring boot"
     echo "Path to Spring CLI [${CLI_PATH}]"
