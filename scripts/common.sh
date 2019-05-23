@@ -21,8 +21,8 @@ export KAFKA_PORT=7092
 export ZK_PORT=4181
 export MONGO_DB_PORT=29017
 SYSTEM_PROPS="-Dspring.rabbitmq.host=${HEALTH_HOST} -Dspring.rabbitmq.port=${RABBIT_MQ_PORT} -Dendpoints.default.web.enabled=true -Dspring.kafka.bootstrapServers=localhost:${KAFKA_PORT} -Dspring.data.mongodb.port=${MONGO_DB_PORT}"
-CLI_BOOT_VERSION="${CLI_BOOT_VERSION:-2.0.4.RELEASE}"
-CLI_VERSION="${CLI_VERSION:-2.0.0.RELEASE}"
+CLI_BOOT_VERSION="${CLI_BOOT_VERSION:-2.1.4.RELEASE}"
+CLI_VERSION="${CLI_VERSION:-2.1.0.BUILD-SNAPSHOT}"
 
 # ${RETRIES} number of times will try to curl to /actuator/health endpoint to passed port $1 and localhost
 function wait_for_app_to_boot_on_port() {
@@ -288,7 +288,7 @@ function start_kafka() {
     echo -e "\nInstalling spring boot [${CLI_BOOT_VERSION}] and spring cloud [${CLI_VERSION}] plugins"
     yes | sdk use springboot "${CLI_BOOT_VERSION}" || echo "No spring boot"
     echo "Path to Spring CLI [${CLI_PATH}]"
-    yes | "${CLI_PATH}"spring install org.springframework.cloud:spring-cloud-cli:${CLI_VERSION} || echo "Sth went wrong with spring boot cli :("
+    yes | "${CLI_PATH}"spring install org.springframework.cloud:spring-cloud-cli:${CLI_VERSION}
     echo -e "\nPrinting versions"
     ${CLI_PATH}spring version || echo "Spring Boot CLI Didn't work"
     ${CLI_PATH}spring cloud --version || echo "Spring Cloud CLI Didn't work"
