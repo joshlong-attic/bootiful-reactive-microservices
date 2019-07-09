@@ -17,12 +17,11 @@ PRESENCE_CHECK_URL="${PRESENCE_CHECK_URL:-http://localhost:8761/eureka/apps}"
 TEST_PATH="${TEST_PATH:-reservations/names}"
 HEALTH_HOST="${DEFAULT_HEALTH_HOST:-localhost}" #provide DEFAULT_HEALT HOST as host of your docker machine
 export RABBIT_MQ_PORT="${RABBIT_MQ_PORT:-9672}"
-export KAFKA_PORT=7092
-export ZK_PORT=4181
+export KAFKA_PORT=9092
+export ZK_PORT=2181
 export MONGO_DB_PORT=29017
+export MY_IP="$( ./whats_my_ip.sh )"
 SYSTEM_PROPS="-Dspring.rabbitmq.host=${HEALTH_HOST} -Dspring.rabbitmq.port=${RABBIT_MQ_PORT} -Dendpoints.default.web.enabled=true -Dspring.kafka.bootstrapServers=localhost:${KAFKA_PORT} -Dspring.data.mongodb.port=${MONGO_DB_PORT}"
-CLI_BOOT_VERSION="${CLI_BOOT_VERSION:-2.1.4.RELEASE}"
-CLI_VERSION="${CLI_VERSION:-2.1.0.BUILD-SNAPSHOT}"
 
 # ${RETRIES} number of times will try to curl to /actuator/health endpoint to passed port $1 and localhost
 function wait_for_app_to_boot_on_port() {
@@ -255,50 +254,6 @@ function setup_infra() {
     cd ${ROOT_FOLDER}
     echo "Starting docker-compose"
     docker-compose up -d || echo "Failed to start something - hopefully you have it already running"
-    start_kafka
-}
-
-export CLI_PATH
-
-function run_kafka() {
-    local APP_JAVA_PATH="${ROOT_FOLDER}/${BUILD_FOLDER}/"
-    mkdir -p ${APP_JAVA_PATH} || echo "Folder already created"
-    local EXPRESSION="nohup ${CLI_PATH}spring cloud kafka >$APP_JAVA_PATH/kafka.log &"
-    echo -e "\nTrying to run [$EXPRESSION]"
-    eval ${EXPRESSION}
-    pid=$!
-    echo ${pid} > ${APP_JAVA_PATH}/app.pid
-    echo -e "[kafka] process pid is [$pid]"
-    echo -e "Logs are under [target/kafka.log]\n"
-    return 0
-}
-
-function start_kafka() {
-    echo "Will run Kafka on port [${KAFKA_PORT}]"
-    echo -e "\nCheck if sdkman is installed"
-    SDK_INSTALLED="no"
-    [[ -s "${HOME}/.sdkman/bin/sdkman-init.sh" ]] && yes | source "${HOME}/.sdkman/bin/sdkman-init.sh" || echo "Failed to source sdkman"
-    sdk version && SDK_INSTALLED="true" || echo "Failed to execute SDKman"
-    CLI_PATH="${HOME}/.sdkman/candidates/springboot/${CLI_BOOT_VERSION}/bin/"
-    if [[ "${SDK_INSTALLED}" == "no" ]] ; then
-      echo "Installing SDKman"
-      curl -s "https://get.sdkman.io" | bash
-      source "${HOME}/.sdkman/bin/sdkman-init.sh"
-    fi
-    echo "Updating SDK man"
-    sdk selfupdate force
-    echo -e "\nInstalling spring boot [${CLI_BOOT_VERSION}] and spring cloud [${CLI_VERSION}] plugins"
-    yes | sdk use springboot "${CLI_BOOT_VERSION}" || echo "No spring boot"
-    echo "Path to Spring CLI [${CLI_PATH}]"
-    yes | "${CLI_PATH}"spring install org.springframework.cloud:spring-cloud-cli:${CLI_VERSION}
-    echo -e "\nPrinting versions"
-    ${CLI_PATH}spring version || echo "Spring Boot CLI Didn't work"
-    ${CLI_PATH}spring cloud --version || echo "Spring Cloud CLI Didn't work"
-
-    echo -e "\nRunning Kafka"
-    run_kafka
-    echo "Waiting for Kafka to boot for [10] seconds"
-    sleep 10
 }
 
 export WAIT_TIME

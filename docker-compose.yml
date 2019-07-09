@@ -1,4 +1,4 @@
-version: '2'
+version: '3'
 services:
   rabbitmq:
     image: rabbitmq:management
@@ -12,3 +12,12 @@ services:
     image: redis:alpine
     ports:
       - 6379:6379
+  zookeeper:
+    image: wurstmeister/zookeeper
+  kafka:
+    image: wurstmeister/kafka
+    ports:
+      - ${KAFKA_PORT:-9092}:${KAFKA_PORT:-9092}
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: ${MY_IP:-localhost}
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:${ZK_PORT:-2181}
